@@ -1,37 +1,39 @@
 import os
-from PIL import Image
-from pprint import pprint
-
 import cv2
 import glob
-import numpy as np
-import os
 
 
-class ImageProcessor:
+class ImageDeveloper:
 
     def __init__(self, file=None):
         
-        self.filenm= os.path.basename(file)
+        self.filename= os.path.basename(file)
         self.img=cv2.imread(file)
-
     
+    def get_img_size(self):
+        self.height, self.width, self.channels = self.img.shape
 
-def create_folder(dest_path):
-    try:
-        os.mkdir(dest_path)
-    except FileExistsError:
-        pass
+    def resize_image(self, selected_height=None):
+        self.get_img_size()
+        new_width = int(selected_height * (self.height / self.width))
+        new_size = (selected_height,new_width)
+        output = cv2.resize(self.img, new_size)
+        cv2.imwrite(f"processed_images/{self.filename}", output)
 
-def download_images(images_directory):
-    all_images_paths = []
-    images_directories = os.listdir(images_directory)
-    for directory in images_directories:
-        directory_relaitve_path = f"{images_directory}/{directory}"
-        files = os.listdir(directory_relaitve_path)
-        for file in files:
-            if file.endswith(".png"):
-                all_images_paths.append(f"{images_directory}/{directory}/{file}")
-            else:
-                 pass
-    return all_images_paths
+
+def prep_images(path):
+    height_list = []
+    for file in path:
+        developed_image = ImageDeveloper(file)
+        developed_image.get_img_size()
+        height_list.append(developed_image.height)
+        min_height=min(height_list)
+        developed_image.resize_image(min_height)
+        print(min_height)
+      
+if __name__ == "__main__":
+    print("leggo")
+    path = []
+    for image_path in glob.glob("image/*/*png"):
+        path.append(image_path)
+    prep_images(path)
