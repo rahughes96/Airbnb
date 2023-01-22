@@ -18,7 +18,8 @@ class ImageDeveloper:
         new_width = int(selected_height * (self.height / self.width))
         new_size = (selected_height,new_width)
         output = cv2.resize(self.img, new_size)
-        cv2.imwrite(f"processed_images/{self.filename}", output)
+        os.mkdir(f"/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb_Git_Repo/AirbnbDataSci/processed_images/{self.filename[:-4]}")
+        cv2.imwrite(f"/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb_Git_Repo/AirbnbDataSci/processed_images/{self.filename[:-4]}/{self.filename}", output)
 
 
 def prep_images(path):
@@ -29,11 +30,20 @@ def prep_images(path):
         height_list.append(developed_image.height)
         min_height=min(height_list)
         developed_image.resize_image(min_height)
-        print(min_height)
-      
+
+def create_folder(dest_path):
+    try:
+        os.mkdir(dest_path)
+    except FileExistsError:
+        pass
+
+
 if __name__ == "__main__":
-    print("leggo")
+    print("lets rumble")
+    create_folder("/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb_Git_Repo/AirbnbDataSci/processed_images")
     path = []
-    for image_path in glob.glob("image/*/*png"):
+    for image_path in glob.glob("/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb_Git_Repo/AirbnbDataSci/images/*/*"):
         path.append(image_path)
+    print("resizing images")
     prep_images(path)
+    print("finished :)")
