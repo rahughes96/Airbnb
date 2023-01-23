@@ -18,8 +18,11 @@ class ImageDeveloper:
         new_width = int(selected_height * (self.height / self.width))
         new_size = (selected_height,new_width)
         output = cv2.resize(self.img, new_size)
-        os.mkdir(f"/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb_Git_Repo/AirbnbDataSci/processed_images/{self.filename[:-4]}")
-        cv2.imwrite(f"/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb_Git_Repo/AirbnbDataSci/processed_images/{self.filename[:-4]}/{self.filename}", output)
+        try:
+            os.mkdir(f"/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb_Git_Repo/AirbnbDataSci/processed_images/{self.filename[:-6]}")
+        except FileExistsError:
+            pass
+        cv2.imwrite(f"/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb_Git_Repo/AirbnbDataSci/processed_images/{self.filename[:-6]}/{self.filename}", output)
 
 
 def prep_images(path):
