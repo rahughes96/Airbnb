@@ -1,6 +1,7 @@
 import os
 import cv2
 import glob
+import numpy as np
 
 
 class ImageDeveloper:
@@ -19,10 +20,10 @@ class ImageDeveloper:
         new_size = (selected_height,new_width)
         output = cv2.resize(self.img, new_size)
         try:
-            os.mkdir(f"/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb_Git_Repo/AirbnbDataSci/processed_images/{self.filename[:-6]}")
+            os.mkdir(f"/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Processed_Data/processed_images/{self.filename[:-6]}")
         except FileExistsError:
             pass
-        cv2.imwrite(f"/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb_Git_Repo/AirbnbDataSci/processed_images/{self.filename[:-6]}/{self.filename}", output)
+        cv2.imwrite(f"/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Processed_Data/processed_images/{self.filename[:-6]}/{self.filename}", output)
 
 
 def prep_images(path):
@@ -43,9 +44,8 @@ def create_folder(dest_path):
 
 if __name__ == "__main__":
     print("lets rumble")
-    create_folder("/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb_Git_Repo/AirbnbDataSci/processed_images")
     path = []
-    for image_path in glob.glob("/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb_Git_Repo/AirbnbDataSci/images/*/*"):
+    for image_path in glob.glob("/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/images/*/*png"):
         path.append(image_path)
     print("resizing images")
     prep_images(path)
