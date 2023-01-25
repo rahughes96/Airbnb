@@ -31,6 +31,14 @@ def clean_tabular_data(dataframe):
     dataframe = set_default_feature_values(dataframe)
     return dataframe
 
+def load_airbnb(csv,labl=None):
+    dg = clean_tabular_data(csv)
+    features = dg.data.select_dtypes(['float64', 'int64'])
+    df_features= pd.DataFrame(features)
+    labels = df_features[labl]
+    df_features.drop([labl],axis=1, inplace=True)
+    return (df_features,labels)
+
 if __name__ == "__main__":
     Airbnb_data = pd.read_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/tabular_data/listing.csv')
     cleaned_airbnb_data = clean_tabular_data(Airbnb_data)
