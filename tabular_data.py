@@ -1,3 +1,4 @@
+from json import load
 import pandas as pd
 import ast
 
@@ -31,12 +32,12 @@ def clean_tabular_data(dataframe):
     dataframe = set_default_feature_values(dataframe)
     return dataframe
 
-def load_airbnb(csv,labl=None):
-    dg = clean_tabular_data(csv)
-    features = dg.data.select_dtypes(['float64', 'int64'])
+def load_airbnb(dataframe,label=None):
+    df = clean_tabular_data(dataframe)
+    features = df.select_dtypes(['float64', 'int64'])
     df_features= pd.DataFrame(features)
-    labels = df_features[labl]
-    df_features.drop([labl],axis=1, inplace=True)
+    labels = df_features[label]
+    df_features.drop([label],axis=1, inplace=True)
     return (df_features,labels)
 
 if __name__ == "__main__":
@@ -46,3 +47,5 @@ if __name__ == "__main__":
         cleaned_airbnb_data.to_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv')
     except FileExistsError:
         pass
+
+    (features, labels) = load_airbnb(Airbnb_data, "Price_Night")
