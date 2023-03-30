@@ -33,12 +33,14 @@ def clean_tabular_data(dataframe):
     return dataframe
 
 def load_airbnb(dataframe,label=None):
-    df = clean_tabular_data(dataframe)
-    features = df.select_dtypes(['float64', 'int64'])
-    df_features= pd.DataFrame(features)
+    df = dataframe
+    df_features = df.select_dtypes(['float64', 'int64'])
+    df_features= pd.DataFrame(df_features)
+    features = df_features.to_numpy()
     labels = df_features[label]
+    labels = labels.to_numpy()
     df_features.drop([label],axis=1, inplace=True)
-    return (df_features,labels)
+    return (features,labels)
 
 if __name__ == "__main__":
     Airbnb_data = pd.read_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/tabular_data/listing.csv')
