@@ -3,13 +3,33 @@ import pandas as pd
 import ast
 
 def remove_rows_with_missing_ratings(Dataframe):
+
+    """
+
+    This function removes the rows with blank values in the ratings columns and returns the dataframe
+
+    Attributes:
+        Dataframe (df): The raw dataframe of the listings file 
+    
+    """
+    
     rating_columns=['Cleanliness_rating','Accuracy_rating','Communication_rating','Location_rating','Check-in_rating','Value_rating','Description']
     Dataframe.dropna(subset = rating_columns, inplace = True)
     return Dataframe
 
-def clean_strings(str):
+def clean_strings(string):
+
+    """
+
+    Cleans the columns that have string values by removing superflous information and joins the lines into one line
+
+    Attributes:
+        string (str): the string contained in the dataframe columns
+    
+    """
+
     try:
-        clean_str = ast.literal_eval(str)
+        clean_str = ast.literal_eval(string)
         clean_str.remove("About this space")
         clean_str = "".join(clean_str)
         return clean_str
@@ -17,25 +37,68 @@ def clean_strings(str):
         return str
 
 def clean_description_strings(dataframe):
+
+    """
+
+    Applies the previous function into the dataframe as well as remove more supeflous characters in the description string
+
+    Attributes:
+        Dataframe (df): The raw dataframe of the listings file 
+    
+    """
+
     dataframe["Description"] = dataframe["Description"].apply(clean_strings)
     dataframe["Description"].replace([r"\\n", "\n", r"\'"], [" "," ",""], regex=True, inplace=True)
     return dataframe
 
 def set_default_feature_values(dataframe):
+
+    """
+
+    Selects the columns that will be used as our features, removes the nan values and replaces them with 1
+
+    Attributes:
+        Dataframe (df): The raw dataframe of the listings file 
+    
+    """
+
     columns = ["beds", "bathrooms", "bedrooms", "guests"]
     dataframe[columns] = dataframe[columns].fillna(1)
     return dataframe
 
 def clean_tabular_data(dataframe):
+
+    """
+
+    Compiles the three previous functions into one by removing rows with missing values, cleaning the description strings andsetting the default feature values.
+
+    Attributes:
+        Dataframe (df): The raw dataframe of the listings file 
+    
+    """
+
+    #dataframe = dataframe.iloc[: ,:-1]
     dataframe = remove_rows_with_missing_ratings(dataframe)
     dataframe = clean_description_strings(dataframe)
     dataframe = set_default_feature_values(dataframe)
     return dataframe
 
 def load_airbnb(dataframe,label=None):
-    df = dataframe
-    df_features = df.select_dtypes(['float64', 'int64'])
+
+    """
+
+    Assigns the features and labels into a tuple, where the labels is the set of values you are wanting to predict (in this case it will be the Price_Night),
+    ad the festures is the set of all other numerical data  
+
+    Attributes:
+        Dataframe (df): The raw dataframe of the listings file 
+        Label (str): String value of the column we ar predicting 
+    
+    """
+
+    df_features = dataframe.select_dtypes(['float64', 'int64'])
     df_features= pd.DataFrame(df_features)
+    df_features = df_features.dropna()
     features = df_features.to_numpy()
     labels = df_features[label]
     labels = labels.to_numpy()
@@ -43,11 +106,16 @@ def load_airbnb(dataframe,label=None):
     return (features,labels)
 
 if __name__ == "__main__":
+    print("Loading data...")
     Airbnb_data = pd.read_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/tabular_data/listing.csv')
+    print("Cleaning...")
     cleaned_airbnb_data = clean_tabular_data(Airbnb_data)
-    try:
-        cleaned_airbnb_data.to_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv')
-    except FileExistsError:
-        pass
+    #try:
+    cleaned_airbnb_data.to_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv')
+    
+    #except FileExistsError:
+    
+        #pass
 
     (features, labels) = load_airbnb(Airbnb_data, "Price_Night")
+    print("done")
