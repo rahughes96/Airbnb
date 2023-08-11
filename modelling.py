@@ -18,23 +18,25 @@ class MGS():
         self.train_split ={}
 
     def sgd(self, path, label):
-        Airbnb_data = pd.read_csv(path)
-        cleaned_airbnb_data = clean_tabular_data(Airbnb_data)
-        print("clean airbnb data:", cleaned_airbnb_data.head())
+        airbnb_data = pd.read_csv(path)
+        cleaned_airbnb_data = clean_tabular_data(airbnb_data)
+        airbnb_data.to_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/tabular_data/listing_test.csv')
+        print("clean airbnb data:", cleaned_airbnb_data)
 
         #Airbnb_data = pd.read_csv(path)
 
         (X,y) = load_airbnb(cleaned_airbnb_data, label)
-        print("X and y:")
-        print(X,y)
+        #print("X and y:")
+        #print(X,y)
 
 
         #(X,y) = load_airbnb(Airbnb_data, label)
 
-        #X = normalize(X, )
-        #y = normalize(y)
-        print("scale(X) and scale(y):")
-        print(X,y)
+        X = scale(X)
+        y = scale(y)
+        #print("scale(X) and scale(y):")
+        #print(X,y)
+        print(X)
         xtrain, xtest, ytrain, ytest = model_selection.train_test_split(X, y, test_size=0.3)
 
         xvalid, xtest, yvalid, ytest = model_selection.train_test_split(xtest, ytest, test_size=0.5)
@@ -55,4 +57,9 @@ if __name__ == "__main__":
     mgs = MGS()
     mgs.sgd('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/tabular_data/listing.csv', 'Price_Night')
     
-    print(mgs.train_split)
+    #print(mgs.train_split)
+
+    sgdr = SGDRegressor()
+    sgdr.fit(mgs.train_split['xtrain'], mgs.train_split['ytrain'])
+
+

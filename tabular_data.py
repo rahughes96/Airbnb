@@ -14,7 +14,7 @@ def remove_rows_with_missing_ratings(Dataframe):
     """
     
     rating_columns=['Cleanliness_rating','Accuracy_rating','Communication_rating','Location_rating','Check-in_rating','Value_rating','Description']
-    Dataframe.dropna(subset = rating_columns, inplace = True)
+    Dataframe[rating_columns] = Dataframe[rating_columns].dropna(0)
     return Dataframe
 
 def clean_strings(string):
@@ -78,9 +78,10 @@ def clean_tabular_data(dataframe):
     """
 
     #dataframe = dataframe.iloc[: ,:-1]
+    dataframe = set_default_feature_values(dataframe)
     dataframe = remove_rows_with_missing_ratings(dataframe)
     dataframe = clean_description_strings(dataframe)
-    dataframe = set_default_feature_values(dataframe)
+    dataframe = dataframe.loc[:, ~dataframe.columns.str.contains('^Unnamed')]
     return dataframe
 
 def load_airbnb(dataframe,label=None):
@@ -96,9 +97,8 @@ def load_airbnb(dataframe,label=None):
     
     """
 
+    df_features = clean_tabular_data(dataframe)
     df_features = dataframe.select_dtypes(['float64', 'int64'])
-    df_features= pd.DataFrame(df_features)
-    df_features = df_features.dropna()
     features = df_features.to_numpy()
     labels = df_features[label]
     labels = labels.to_numpy()
