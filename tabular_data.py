@@ -14,7 +14,7 @@ def remove_rows_with_missing_ratings(Dataframe):
     """
     
     rating_columns=['Cleanliness_rating','Accuracy_rating','Communication_rating','Location_rating','Check-in_rating','Value_rating','Description']
-    Dataframe[rating_columns] = Dataframe[rating_columns].dropna(0)
+    Dataframe.dropna(inplace = True, subset = rating_columns)
     return Dataframe
 
 def clean_strings(string):

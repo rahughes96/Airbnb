@@ -20,8 +20,10 @@ class MGS():
     def sgd(self, path, label):
         airbnb_data = pd.read_csv(path)
         cleaned_airbnb_data = clean_tabular_data(airbnb_data)
-        airbnb_data.to_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/tabular_data/listing_test.csv')
-        print("clean airbnb data:", cleaned_airbnb_data)
+        cleaned_airbnb_data[['Cleanliness_rating','Accuracy_rating','Communication_rating','Location_rating','Check-in_rating','Value_rating','Description']] = cleaned_airbnb_data[['Cleanliness_rating','Accuracy_rating','Communication_rating','Location_rating','Check-in_rating','Value_rating','Description']].dropna()
+        cleaned_airbnb_data.to_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/tabular_data/listing_test.csv')
+
+        print("clean airbnb data:", cleaned_airbnb_data.head())
 
         #Airbnb_data = pd.read_csv(path)
 
