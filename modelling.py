@@ -1,6 +1,7 @@
 from unicodedata import normalize
 import pandas as pd
 import seaborn as sns
+import matplotlib.pyplot as plt
 from tabular_data import load_airbnb
 from tabular_data import clean_tabular_data
 
@@ -9,6 +10,7 @@ from sklearn import linear_model
 from sklearn import datasets
 from sklearn.preprocessing import scale
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import SGDRegressor
 from sklearn.model_selection import cross_val_score
 
@@ -51,9 +53,31 @@ class MGS():
             'xvalid' :xvalid,
             'yvalid' : yvalid
         }
+        sgdr = SGDRegressor()
+        sgdr.fit(mgs.train_split['xtrain'], mgs.train_split['ytrain'])
 
-        
-    #def plot_results(self, )
+        cv_score = cross_val_score(sgdr, X, y, cv = 10)
+        print("CV mean score: ", cv_score.mean())
+        #def plot_results(self, )
+
+        score = sgdr.score(mgs.train_split['xtrain'], mgs.train_split['ytrain'])
+        print("R-squared:", score)
+
+        ypred = sgdr.predict(xtest)
+
+        mse = mean_squared_error(ytest, ypred)
+        print("MSE: ", mse)
+        print("RMSE: ", mse**(1/2.0))
+
+        x_ax = range(len(ytest))
+        plt.plot(x_ax, ytest, linewidth=1, label="original")
+        plt.plot(x_ax, ypred, linewidth=1.1, label="predicted")
+        plt.title("y-test and y-predicted data")
+        plt.xlabel('X-axis')
+        plt.ylabel('Y-axis')
+        plt.legend(loc='best', fancybox = True, shadow=True)
+        plt.grid(True)
+        plt.show()
 
 if __name__ == "__main__":
     mgs = MGS()
@@ -61,7 +85,6 @@ if __name__ == "__main__":
     
     #print(mgs.train_split)
 
-    sgdr = SGDRegressor()
-    sgdr.fit(mgs.train_split['xtrain'], mgs.train_split['ytrain'])
+
 
 
