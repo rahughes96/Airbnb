@@ -6,6 +6,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tabular_data import load_airbnb
 from tabular_data import clean_tabular_data
+import os
+import joblib
+import json
 
 from sklearn import model_selection
 from sklearn import linear_model
@@ -22,6 +25,9 @@ class MGS():
 
     def __init__(self):
         self.train_split ={}
+        self.best_model = None
+        self.best_hyperparameters = {}
+        self.metrics = {}
 
     def sgd(self, path, label):
         airbnb_data = pd.read_csv(path)
@@ -130,29 +136,49 @@ class MGS():
 
         return best_model, best_hyperparameters, validation_rmse
 
+    def save_model(self, folder="models/regression/linear_regression"):
+        # Create the folder if it doesn't exist
+        os.makedirs(folder, exist_ok=True)
 
+        # Save the trained model using joblib
+        model_filename = os.path.join(folder, "model.joblib")
+        joblib.dump(self.best_model, model_filename)
+
+        # Save hyperparameters as JSON
+        hyperparameters_filename = os.path.join(folder, "hyperparameters.json")
+        with open(hyperparameters_filename, "w") as hyperparameters_file:
+            json.dump(self.best_hyperparameters, hyperparameters_file, indent=4)
+
+        # Save performance metrics as JSON
+        metrics_filename = os.path.join(folder, "metrics.json")
+        with open(metrics_filename, "w") as metrics_file:
+            json.dump(self.metrics, metrics_file, indent=4)
+
+        
 if __name__ == "__main__":
 
     mgs = MGS()
     mgs.sgd('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/tabular_data/listing.csv', 'Price_Night')
-    
-hyperparameters = {
-    'alpha': [0.001, 0.01, 0.1, 1.0],
-    'penalty': ['l1', 'l2', 'elasticnet'],
-    'max_iter': [1000, 2000, 3000],
-}
 
-best_model, best_hyperparams, metrics = mgs.custom_tune_regression_model_hyperparameters(
-    model_class=SGDRegressor,
-    xtrain=mgs.train_split['xtrain'],
-    ytrain=mgs.train_split['ytrain'],
-    xvalid=mgs.train_split['xvalid'],
-    yvalid=mgs.train_split['yvalid'],
-    hyperparameters=hyperparameters
-)
+    hyperparameters = {
+        'alpha': [0.001, 0.01, 0.1, 1.0],
+        'penalty': ['l1', 'l2', 'elasticnet'],
+        'max_iter': [1000, 2000, 3000],
+    }
 
-print("Best hyperparameters:", best_hyperparams)
-print("Validation RMSE:", metrics["validation_RMSE"])
+    best_model, best_hyperparams, metrics = mgs.custom_tune_regression_model_hyperparameters(
+        model_class=SGDRegressor,
+        xtrain=mgs.train_split['xtrain'],
+        ytrain=mgs.train_split['ytrain'],
+        xvalid=mgs.train_split['xvalid'],
+        yvalid=mgs.train_split['yvalid'],
+        hyperparameters=hyperparameters
+    )
+    best_model = best_model
+    print("Best hyperparameters:", best_hyperparams)
+    print("Validation RMSE:", metrics["validation_RMSE"])
+
+    mgs.save_model(folder="models/regression/linear_regression")
 
 
 
