@@ -1,7 +1,6 @@
 import os
 import cv2
 import glob
-import numpy as np
 
 
 class ImageDeveloper:
@@ -64,7 +63,7 @@ def prep_images(path):
 def create_folder(dest_path):
 
     """
-    
+
     Create a folder at the specified destination path if it doesn't already exist.
 
     Parameters:

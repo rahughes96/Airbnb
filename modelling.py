@@ -248,7 +248,7 @@ class MGS():
             json.dump(metrics, metrics_file, indent=4)
 
     
-    def evaluate_all_models(self, path, label):
+    def evaluate_all_models(self, path, label, plot = True):
 
         """
 
@@ -257,13 +257,14 @@ class MGS():
         Parameters:
             path (str): The path to the CSV file containing Airbnb data.
             label (str): The title of the column to predict.
+            Plot (Bool): Whether or not you require a visual graph of the results of each model
 
         """
 
             # Load and clean the data
         print("Load and clean the data")
         airbnb_data = pd.read_csv(path)
-        cleaned_airbnb_data = clean_tabular_data(airbnb_data)
+        cleaned_airbnb_data = clean_tabular_data(airbnb_data).dropna()
         cleaned_airbnb_data.to_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/tabular_data/listing_test.csv')
 
         (X, y) = load_airbnb(cleaned_airbnb_data, label)
@@ -304,7 +305,8 @@ class MGS():
                     best_hyperparameters=sgd_best_hyperparams, metrics=sgd_metrics)
         xtest_sgd = self.train_split['xtest']
         ytest_sgd = self.train_split['ytest']
-        self.plot_predictions(model=sgd_best_model, xtest=xtest_sgd, ytest=ytest_sgd, title="Linear Regression Predictions")
+        if plot:
+            self.plot_predictions(model=sgd_best_model, xtest=xtest_sgd, ytest=ytest_sgd, title="Linear Regression Predictions")
 
         # Evaluate Decision Tree
         print("Evaluate Decision Tree")
@@ -326,7 +328,8 @@ class MGS():
         
         xtest_dt = self.train_split['xtest']
         ytest_dt = self.train_split['ytest']
-        self.plot_predictions(model=dt_best_model, xtest=xtest_dt, ytest=ytest_dt, title="Decision Tree Predictions")
+        if plot:
+            self.plot_predictions(model=dt_best_model, xtest=xtest_dt, ytest=ytest_dt, title="Decision Tree Predictions")
 
         # Evaluate Random Forest
         print("Evaluate Random Forest")
@@ -349,7 +352,8 @@ class MGS():
         
         xtest_rf = self.train_split['xtest']
         ytest_rf = self.train_split['ytest']
-        self.plot_predictions(model=rf_best_model, xtest=xtest_rf, ytest=ytest_rf, title="Random Forest Predictions")
+        if plot:
+            self.plot_predictions(model=rf_best_model, xtest=xtest_rf, ytest=ytest_rf, title="Random Forest Predictions")
 
 
         # Evaluate Gradient Boosting
@@ -374,7 +378,8 @@ class MGS():
 
         xtest_gb = self.train_split['xtest']
         ytest_gb = self.train_split['ytest']
-        self.plot_predictions(model=gb_best_model, xtest=xtest_gb, ytest=ytest_gb, title="Gradient Boosting Predictions")
+        if plot:
+            self.plot_predictions(model=gb_best_model, xtest=xtest_gb, ytest=ytest_gb, title="Gradient Boosting Predictions")
 
     def find_best_model(self):
 
@@ -435,6 +440,6 @@ if __name__ == "__main__":
     mgs = MGS()
 
     print("Evaluate all models")
-    mgs.evaluate_all_models('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/tabular_data/listing.csv', 'Price_Night')
+    mgs.evaluate_all_models('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/tabular_data/listing.csv', 'Price_Night', plot=False)
 
     best_model, best_hyperparameters, best_performance_metrics = mgs.find_best_model()
