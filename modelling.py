@@ -304,9 +304,11 @@ class MGS():
         # Evaluate Linear Regression
         print("Evaluate Linear Regression")
         sgd_hyperparameters={
-                'alpha': [0.001, 0.01, 0.1, 1.0],
+                'learning_rate': ['constant'],
+                'eta0': [0.01, 0.05, 0.1],
+                'alpha': [0.0001, 0.001, 0.01, 0.1, 1.0],
                 'penalty': ['l1', 'l2', 'elasticnet'],
-                'max_iter': [1000, 2000, 3000],
+                'max_iter': [5000],
         }
         sgd_best_model, sgd_best_hyperparams, sgd_metrics = self.tune_regression_model_hyperparameters(
             model_class=SGDRegressor,
