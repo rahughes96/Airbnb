@@ -1,3 +1,11 @@
 {
-    "validation_RMSE": 0.01986089446754977
+    "train_RMSE": 0.04688701851482072,
+    "test_RMSE": 0.011915658926235138,
+    "validation_RMSE": 0.19527282465637116,
+    "train_R2": 0.9978968831270522,
+    "test_R2": 0.9997126117066132,
+    "validation_R2": null,
+    "train_MSE": 0.0021983925052091414,
+    "test_MSE": 0.0001419829276463671,
+    "validation_MSE": null
 }

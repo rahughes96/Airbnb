@@ -210,8 +210,24 @@ class MGS():
         valid_rmse = np.sqrt(mean_squared_error(yvalid, ypred_valid))
         self.metrics["validation_RMSE_on_xvalid"] = valid_rmse
 
+        # Calculate R2
+        train_r2 = self.best_model.score(xtrain, ytrain)
+        valid_r2 = self.best_model.score(xvalid, yvalid)
+
+        # Calculate MSE
+        train_mse = mean_squared_error(ytrain, self.best_model.predict(xtrain))
+        valid_mse = mean_squared_error(yvalid, ypred_valid)
+
         performance_metrics = {
-            "validation_RMSE": valid_rmse
+            "train_RMSE": np.sqrt(mean_squared_error(ytrain, self.best_model.predict(xtrain))),
+            "test_RMSE": np.sqrt(mean_squared_error(yvalid, ypred_valid)),
+            "validation_RMSE": validation_rmse,
+            "train_R2": train_r2,
+            "test_R2": valid_r2,
+            "validation_R2": None,
+            "train_MSE": train_mse,
+            "test_MSE": valid_mse,
+            "validation_MSE": None
         }  
 
         return self.best_model, self.best_hyperparameters, performance_metrics
@@ -265,7 +281,7 @@ class MGS():
         print("Load and clean the data")
         airbnb_data = pd.read_csv(path)
         cleaned_airbnb_data = clean_tabular_data(airbnb_data).dropna()
-        cleaned_airbnb_data.to_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/tabular_data/listing_test.csv')
+        cleaned_airbnb_data.to_csv('AirbnbData/Raw_Data/tabular_data/listing.csv')
 
         (X, y) = load_airbnb(cleaned_airbnb_data, label)
 
@@ -440,6 +456,6 @@ if __name__ == "__main__":
     mgs = MGS()
 
     print("Evaluate all models")
-    mgs.evaluate_all_models('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/tabular_data/listing.csv', 'Price_Night', plot=False)
+    mgs.evaluate_all_models('AirbnbData/Raw_Data/tabular_data/listing.csv', 'Price_Night', plot=False)
 
     best_model, best_hyperparameters, best_performance_metrics = mgs.find_best_model()

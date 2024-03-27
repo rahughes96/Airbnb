@@ -23,4 +23,5 @@ The file AirBnbData.csv is downloaded from the zip file provided. The python fil
 
 <img width="1085" alt="Screenshot 2024-02-12 at 22 50 12" src="https://github.com/rahughes96/Airbnb/assets/102994234/e18df85c-bd7b-4206-905d-7ccbb1cd3295">
 
-Becausew the "description" column of the dataset contained lists of strings we needed to create a function to combine them into one string:
+Because the "description" column of the dataset contained lists of strings we needed to create a function to combine them into one string:
+
