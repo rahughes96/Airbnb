@@ -84,7 +84,7 @@ def clean_tabular_data(dataframe):
     dataframe = dataframe.loc[:, ~dataframe.columns.str.contains('^Unnamed')]
     return dataframe
 
-def load_airbnb(dataframe,label=None):
+def load_airbnb_reg(dataframe,label=None):
 
     """
 
@@ -98,8 +98,21 @@ def load_airbnb(dataframe,label=None):
     """
 
     df_features = clean_tabular_data(dataframe)
+    #print(df_features)
     df_features = dataframe.select_dtypes(['float64', 'int64'])
     features = df_features.to_numpy()
+    print(df_features)
+    labels = df_features[label]
+    labels = labels.to_numpy()
+    df_features.drop([label],axis=1, inplace=True)
+    return (features,labels)
+
+def load_airbnb_class(dataframe, label):
+    df_features = clean_tabular_data(dataframe)
+    #print(df_features)
+    #df_features = dataframe.select_dtypes(['float64', 'int64'])
+    features = df_features.to_numpy()
+    print(df_features)
     labels = df_features[label]
     labels = labels.to_numpy()
     df_features.drop([label],axis=1, inplace=True)
