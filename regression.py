@@ -383,7 +383,7 @@ class MGS():
             'min_samples_split': [2, 5, 10],
             'min_samples_leaf': [1, 2, 4]
         }
-        gb_best_model, gb_best_hyperparams, gb_metrics = self.custom_tune_regression_model_hyperparameters(
+        gb_best_model, gb_best_hyperparams, gb_metrics = self.tune_regression_model_hyperparameters(
             model_class=GradientBoostingRegressor,
             xtrain=self.train_split['xtrain'],
             ytrain=self.train_split['ytrain'],
