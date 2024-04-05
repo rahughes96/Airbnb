@@ -1,4 +1,6 @@
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
@@ -17,6 +19,8 @@ class AirbnbLogisticRegression:
         self.best_model = None
         self.metrics = {}
         self.train_split = {}
+        self.train_accuracy_history = []  # Store training accuracy history
+        self.valid_accuracy_history = []  # Store validation accuracy history
 
     def load_data(self, filepath):
         # Load data
@@ -73,13 +77,14 @@ class AirbnbLogisticRegression:
         }
 
         self.data = dataframe
+        self.data.to_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/tabular_data/classification_data_test.csv')
 
         return self.data
 
     def train_model(self):
         #print(self.X_train)
         # Train logistic regression model
-        self.model = LogisticRegression(max_iter=5000)
+        self.model = LogisticRegression(max_iter=1000)
         self.model.fit(self.train_split["xtrain"], self.train_split["ytrain"])
 
     def preprocess_data(self):
@@ -164,6 +169,42 @@ class AirbnbLogisticRegression:
 
         print(performance_metrics)
         return self.best_model, self.best_hyperparameters, performance_metrics
+    
+    def compute_learning_curves(self, model, train_sizes):
+        performance_metrics = {'train': [], 'validation': []}
+
+        for size in train_sizes:
+            size = int(size)
+            # Select a subset of the training data with the current size
+            subset_x_train = self.train_split['xtrain'][:size]
+            subset_y_train = self.train_split['ytrain'][:size]
+
+            # Train the model on the subset
+            model.fit(subset_x_train, subset_y_train)
+
+            # Evaluate the model on the subset and validation set
+            train_predictions = model.predict(subset_x_train)
+            train_accuracy = accuracy_score(subset_y_train, train_predictions)
+
+            validation_predictions = model.predict(self.train_split['xvalid'])
+            validation_accuracy = accuracy_score(self.train_split['yvalid'], validation_predictions)
+
+            # Record the performance metrics
+            performance_metrics['train'].append(train_accuracy)
+            performance_metrics['validation'].append(validation_accuracy)
+
+        return performance_metrics
+    
+    def plot_learning_curves(self, train_sizes, performance_metrics):
+        plt.figure(figsize=(10, 6))
+        plt.plot(train_sizes, performance_metrics['train'], label='Training')
+        plt.plot(train_sizes, performance_metrics['validation'], label='Validation')
+        plt.xlabel('Training Set Size')
+        plt.ylabel('Performance Metric')
+        plt.title('Learning Curves')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
 
 if __name__ == "__main__":
     filepath = 'AirbnbData/Raw_Data/tabular_data/listing.csv'
@@ -183,9 +224,17 @@ if __name__ == "__main__":
         'penalty': ['l1', 'l2'],
         'solver': ['liblinear', 'saga']
     }
-    print("/n final perfomance metrics:")
-    best_model, best_hyperparameters, performance_metrics = airbnb_lr.tune_classification_model_hyperparameters(LogisticRegression, airbnb_lr.train_split["xtrain"], airbnb_lr.train_split["ytrain"], airbnb_lr.train_split["xvalid"], airbnb_lr.train_split["yvalid"], param_grid)
+    #print("/n final perfomance metrics:")
+    #best_model, best_hyperparameters, performance_metrics = airbnb_lr.tune_classification_model_hyperparameters(LogisticRegression, airbnb_lr.train_split["xtrain"], airbnb_lr.train_split["ytrain"], airbnb_lr.train_split["xvalid"], airbnb_lr.train_split["yvalid"], param_grid)
 
-    print(best_hyperparameters)
-    print(best_model)
+    #print(best_hyperparameters)
+    #print(best_model)
+
+    train_sizes = np.linspace(0.1, 1.0, 10) * len(airbnb_lr.train_split['xtrain'])
+
+    # Compute the learning curves
+    performance_metrics = airbnb_lr.compute_learning_curves(airbnb_lr.model, train_sizes)
+
+    # Plot the learning curves
+    airbnb_lr.plot_learning_curves(train_sizes, performance_metrics)
 
