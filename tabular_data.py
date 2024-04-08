@@ -1,6 +1,7 @@
 from json import load
 import pandas as pd
 import ast
+from sklearn.preprocessing import LabelEncoder
 
 def remove_rows_with_missing_ratings(Dataframe):
 
@@ -84,7 +85,7 @@ def clean_tabular_data(dataframe):
     dataframe = dataframe.loc[:, ~dataframe.columns.str.contains('^Unnamed')]
     return dataframe
 
-def load_airbnb_reg(dataframe,label=None):
+def load_airbnb_regression(dataframe,label=None):
 
     """
 
@@ -101,22 +102,39 @@ def load_airbnb_reg(dataframe,label=None):
     #print(df_features)
     df_features = dataframe.select_dtypes(['float64', 'int64'])
     features = df_features.to_numpy()
-    print(df_features)
+    #print(df_features)
     labels = df_features[label]
     labels = labels.to_numpy()
     df_features.drop([label],axis=1, inplace=True)
     return (features,labels)
 
-def load_airbnb_class(dataframe, label):
-    df_features = clean_tabular_data(dataframe)
-    #print(df_features)
-    #df_features = dataframe.select_dtypes(['float64', 'int64'])
-    features = df_features.to_numpy()
-    print(df_features)
-    labels = df_features[label]
-    labels = labels.to_numpy()
-    df_features.drop([label],axis=1, inplace=True)
-    return (features,labels)
+def load_data_classification(filepath):
+    # Load data
+    dataframe = pd.read_csv(filepath)
+
+    # Preprocess data
+    columns_to_drop = ['Unnamed: 0', 'ID', 'url', 'Description', 'guests', 'beds', 'Check-in_rating', 'bathrooms']
+    dataframe.drop(columns=columns_to_drop, inplace=True)
+
+    label_encoder = LabelEncoder()
+    columns_to_encode = ['Category', 'Title', 'Location']
+
+    for column in columns_to_encode:
+        dataframe[column] = label_encoder.fit_transform(dataframe[column])
+
+    amenities_encoder = LabelEncoder()
+    dataframe['Amenities'] = dataframe['Amenities'].apply(lambda x: '|'.join(map(str, x)))  # Convert list to string
+    dataframe['Amenities'] = amenities_encoder.fit_transform(dataframe['Amenities'])
+
+
+    columns_to_filter = ["bedrooms"]
+    for column in columns_to_filter:
+        dataframe = dataframe[pd.to_numeric(dataframe[column], errors='coerce').notnull()]
+        dataframe[column] = dataframe[column].astype(int)
+
+
+    dataframe[['Cleanliness_rating','Accuracy_rating','Communication_rating','Location_rating','Value_rating']] = dataframe[['Cleanliness_rating','Accuracy_rating','Communication_rating','Location_rating','Value_rating']].dropna(axis=1)
+    return dataframe
 
 if __name__ == "__main__":
     print("Loading data...")

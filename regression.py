@@ -14,7 +14,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from tabular_data import load_airbnb
+from tabular_data import load_airbnb_regression
 from tabular_data import clean_tabular_data
 
 class MGS():
@@ -45,7 +45,7 @@ class MGS():
 
         print("Cleaned Airbnb data:", cleaned_airbnb_data.head())
 
-        (X, y) = load_airbnb(cleaned_airbnb_data, label)
+        (X, y) = load_airbnb_regression(cleaned_airbnb_data, label)
         X = scale(X)
         y = scale(y)
 
@@ -283,7 +283,7 @@ class MGS():
         cleaned_airbnb_data = clean_tabular_data(airbnb_data).dropna()
         cleaned_airbnb_data.to_csv('AirbnbData/Raw_Data/tabular_data/listing.csv')
 
-        (X, y) = load_airbnb(cleaned_airbnb_data, label)
+        (X, y) = load_airbnb_regression(cleaned_airbnb_data, label)
 
         # Train-test split
         print("Train-test split")
@@ -319,7 +319,7 @@ class MGS():
             param_grid=sgd_hyperparameters
         )
 
-        self.save_model(folder="models/regression/decision_tree", best_model=sgd_best_model,
+        self.save_model(folder="models/regression/linear_regression", best_model=sgd_best_model,
                     best_hyperparameters=sgd_best_hyperparams, metrics=sgd_metrics)
         xtest_sgd = self.train_split['xtest']
         ytest_sgd = self.train_split['ytest']
@@ -389,7 +389,7 @@ class MGS():
             ytrain=self.train_split['ytrain'],
             xvalid=self.train_split['xvalid'],
             yvalid=self.train_split['yvalid'],
-            hyperparameters=gb_hyperparameters
+            param_grid=gb_hyperparameters
         )
         self.save_model(folder="models/regression/gradient_boosting", best_model=gb_best_model,
                         best_hyperparameters=gb_best_hyperparams, metrics=gb_metrics)
@@ -399,7 +399,7 @@ class MGS():
         if plot:
             self.plot_predictions(model=gb_best_model, xtest=xtest_gb, ytest=ytest_gb, title="Gradient Boosting Predictions")
 
-    def find_best_model(self):
+    def find_best_model(self, task_folder):
 
         """
 
@@ -412,10 +412,10 @@ class MGS():
 
         # Define a list of models and their respective folders
         models_folders = [
-            ("Linear Regression", "models/regression/linear_regression"),
-            ("Decision Tree", "models/regression/decision_tree"),
-            ("Random Forest", "models/regression/random_forest"),
-            ("Gradient Boosting", "models/regression/gradient_boosting")
+            ("Linear Regression", f"{task_folder}linear_regression"),
+            ("Decision Tree", f"{task_folder}decision_tree"),
+            ("Random Forest", f"{task_folder}random_forest"),
+            ("Gradient Boosting", f"{task_folder}gradient_boosting")
         ]
 
         best_model_name = None
@@ -458,6 +458,6 @@ if __name__ == "__main__":
     mgs = MGS()
 
     print("Evaluate all models")
-    mgs.evaluate_all_models('AirbnbData/Raw_Data/tabular_data/listing.csv', 'Price_Night', plot=True)
+    mgs.evaluate_all_models('AirbnbData/Raw_Data/tabular_data/listing.csv', 'Price_Night', plot=False)
 
-    best_model, best_hyperparameters, best_performance_metrics = mgs.find_best_model()
+    best_model, best_hyperparameters, best_performance_metrics = mgs.find_best_model("models/regression/")

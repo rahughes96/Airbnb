@@ -1,5 +1,7 @@
 {
-    "alpha": 0.01,
-    "max_iter": 2000,
+    "alpha": 0.1,
+    "eta0": 0.05,
+    "learning_rate": "constant",
+    "max_iter": 5000,
     "penalty": "l1"
 }

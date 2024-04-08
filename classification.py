@@ -1,8 +1,15 @@
 import pandas as pd
 import numpy as np
+import joblib
+import json
+import os
+import seaborn as sns
 import matplotlib.pyplot as plt
+from tabular_data import load_data_classification
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import StandardScaler
@@ -23,39 +30,7 @@ class AirbnbLogisticRegression:
         self.valid_accuracy_history = []  # Store validation accuracy history
 
     def load_data(self, filepath):
-        # Load data
-        dataframe = pd.read_csv(filepath)
-
-        # Preprocess data
-        columns_to_drop = ['Unnamed: 0', 'ID', 'url']
-        dataframe.drop(columns=columns_to_drop, inplace=True)
-
-        label_encoder = LabelEncoder()
-        columns_to_encode = ['Category', 'Title', 'Description', 'Location']
-
-        for column in columns_to_encode:
-            dataframe[column] = label_encoder.fit_transform(dataframe[column])
-
-        amenities_encoder = LabelEncoder()
-        dataframe['Amenities'] = dataframe['Amenities'].apply(lambda x: '|'.join(map(str, x)))  # Convert list to string
-        dataframe['Amenities'] = amenities_encoder.fit_transform(dataframe['Amenities'])
-        #print('1st')
-        #print(dataframe)
-
-        columns_to_filter = ["guests", "bedrooms"]
-        for column in columns_to_filter:
-            dataframe = dataframe[pd.to_numeric(dataframe[column], errors='coerce').notnull()]
-            dataframe[column] = dataframe[column].astype(int)
-
-        print("dataframe before: ", dataframe.info())
-        #dataframe = dataframe.select_dtypes(['float64', 'int64'])
-        #print("dataframe after: ", dataframe.info())
-        dataframe[['Cleanliness_rating','Accuracy_rating','Communication_rating','Location_rating','Check-in_rating','Value_rating','Description']] = dataframe[['Cleanliness_rating','Accuracy_rating','Communication_rating','Location_rating','Check-in_rating','Value_rating','Description']].dropna(axis=1)
-        #print("2nd")
-        #print(dataframe)
-        # Ensure the DataFrame is not empty
-        if len(dataframe) == 0:
-            raise ValueError("DataFrame is empty. Please check the data.")
+        dataframe = load_data_classification(filepath)
 
         # Split data into features and target variable
         X = dataframe.drop(columns=['Category'])
@@ -77,22 +52,26 @@ class AirbnbLogisticRegression:
         }
 
         self.data = dataframe
-        self.data.to_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/tabular_data/classification_data_test.csv')
+        #self.data.to_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/tabular_data/classification_data_test.csv')
 
         return self.data
 
     def train_model(self):
         #print(self.X_train)
         # Train logistic regression model
-        self.model = LogisticRegression(max_iter=1000)
+        self.model = LogisticRegression(solver= 'liblinear', max_iter=100)
         self.model.fit(self.train_split["xtrain"], self.train_split["ytrain"])
 
     def preprocess_data(self):
         scaler = StandardScaler()
 
-        self.X_train = scaler.fit_transform(self.train_split['xtrain'])
-        self.X_test = scaler.transform(self.train_split['xtest'])
-        self.X_valid = scaler.transform(self.train_split['xvalid'])
+        self.train_split["xtrain"] = scaler.fit_transform(self.train_split['xtrain'])
+        self.train_split["xtest"] = scaler.transform(self.train_split['xtest'])
+        self.train_split['xvalid'] = scaler.transform(self.train_split['xvalid'])
+
+        #self.X_train = scaler.fit_transform(self.train_split['xtrain'])
+        #self.X_test = scaler.transform(self.train_split['xtest'])
+        #self.X_valid = scaler.transform(self.train_split['xvalid'])
     
     def evaluate_model(self):
         # Predictions on training set
@@ -205,36 +184,205 @@ class AirbnbLogisticRegression:
         plt.legend()
         plt.grid(True)
         plt.show()
+    
+    def save_model(self, folder, best_model=None, best_hyperparameters=None, metrics=None):
 
-if __name__ == "__main__":
-    filepath = 'AirbnbData/Raw_Data/tabular_data/listing.csv'
-    airbnb_lr = AirbnbLogisticRegression()
-    print("load data...")
-    airbnb_lr.load_data(filepath)
-    #print(data)
-    print("preprocess data...")
-    #airbnb_lr.preprocess_data()
-    print("train model...")
-    airbnb_lr.train_model()
-    print("evaluate model...")
-    airbnb_lr.evaluate_model()
+        """
 
-    param_grid = {
+        Saves the trained regression model, hyperparameters, and performance metrics to a specified folder.
+
+        Parameters:
+            folder (str): The path to the folder where the model, hyperparameters, and metrics will be saved.
+            best_model: The trained regression model to be saved (default is None).
+            best_hyperparameters (dict): The hyperparameters used for training the model (default is None).
+            metrics (dict): The performance metrics of the model (default is None).
+
+        """
+
+        # Create the folder if it doesn't exist
+        os.makedirs(folder, exist_ok=True)
+
+        # Save the trained model using joblib
+        model_filename = os.path.join(folder, "model.joblib")
+        joblib.dump(best_model, model_filename)
+
+        # Save hyperparameters as JSON
+        hyperparameters_filename = os.path.join(folder, "hyperparameters.json")
+        with open(hyperparameters_filename, "w") as hyperparameters_file:
+            json.dump(best_hyperparameters, hyperparameters_file, indent=4)
+
+        # Save performance metrics as JSON
+        metrics_filename = os.path.join(folder, "metrics.json")
+        with open(metrics_filename, "w") as metrics_file:
+            json.dump(metrics, metrics_file, indent=4)
+
+    def evaluate_all_models(self, path):
+        self.load_data(path)
+
+        print("Evaluate Logistic Regression")
+        log_hyperparameters = {
         'C': [0.1, 1, 10],
         'penalty': ['l1', 'l2'],
         'solver': ['liblinear', 'saga']
-    }
-    #print("/n final perfomance metrics:")
-    #best_model, best_hyperparameters, performance_metrics = airbnb_lr.tune_classification_model_hyperparameters(LogisticRegression, airbnb_lr.train_split["xtrain"], airbnb_lr.train_split["ytrain"], airbnb_lr.train_split["xvalid"], airbnb_lr.train_split["yvalid"], param_grid)
+        }
 
-    #print(best_hyperparameters)
-    #print(best_model)
+        log_best_model, log_best_hyperparams, log_metrics = self.tune_classification_model_hyperparameters(
+            model_class=LogisticRegression,
+            xtrain=self.train_split['xtrain'],
+            ytrain=self.train_split['ytrain'],
+            xvalid=self.train_split['xvalid'],
+            yvalid=self.train_split['yvalid'],
+            param_grid=log_hyperparameters
+        )
 
-    train_sizes = np.linspace(0.1, 1.0, 10) * len(airbnb_lr.train_split['xtrain'])
+        self.save_model(folder="models/classification/logistic_regression", best_model=log_best_model,
+            best_hyperparameters=log_best_hyperparams, metrics=log_metrics)
+
+        print("Evaluate Decision Tree")
+        dt_hyperparameters = {
+            'max_depth': [None, 10, 20, 30],
+            'min_samples_split': [2, 5, 10],
+            'min_samples_leaf': [1, 2, 4],
+            'max_features': ['auto', 'sqrt', 'log2']
+        }
+
+        dt_best_model, dt_best_hyperparams, dt_metrics = self.tune_classification_model_hyperparameters(
+            model_class=DecisionTreeClassifier,
+            xtrain=self.train_split['xtrain'],
+            ytrain=self.train_split['ytrain'],
+            xvalid=self.train_split['xvalid'],
+            yvalid=self.train_split['yvalid'],
+            param_grid=dt_hyperparameters
+        )
+
+        self.save_model(folder="models/classification/decision_tree", best_model=dt_best_model,
+            best_hyperparameters=dt_best_hyperparams, metrics=dt_metrics)
+
+
+        print("Evaluate Random Forest")
+        rf_hyperparameters = {
+            'n_estimators': [100, 200, 300],
+            'max_depth': [10, 20, 30, None],
+            'min_samples_split': [2, 5, 10],
+            'min_samples_leaf': [1, 2, 4],
+            'max_features': ['auto', 'sqrt', 'log2']
+        }
+
+        rf_best_model, rf_best_hyperparams, rf_metrics = self.tune_classification_model_hyperparameters(
+            model_class=RandomForestClassifier,
+            xtrain=self.train_split['xtrain'],
+            ytrain=self.train_split['ytrain'],
+            xvalid=self.train_split['xvalid'],
+            yvalid=self.train_split['yvalid'],
+            param_grid=rf_hyperparameters
+        )
+
+        self.save_model(folder="models/classification/random_forest", best_model=rf_best_model,
+            best_hyperparameters=rf_best_hyperparams, metrics=rf_metrics)
+
+
+        print("Evaluate Gradient Boosting")
+        gb_hyperparameters = {
+            'n_estimators': [50, 100, 200],
+            'learning_rate': [0.05, 0.1, 0.2],
+            'max_depth': [3, 4, 5],
+            'min_samples_split': [2, 5, 10],
+            'min_samples_leaf': [1, 2, 4],
+            'max_features': ['sqrt', 'log2', None]  # Adjusted max_features values
+        }
+
+        gb_best_model, gb_best_hyperparams, gb_metrics = self.tune_classification_model_hyperparameters(
+            model_class=GradientBoostingClassifier,
+            xtrain=self.train_split['xtrain'],
+            ytrain=self.train_split['ytrain'],
+            xvalid=self.train_split['xvalid'],
+            yvalid=self.train_split['yvalid'],
+            param_grid=gb_hyperparameters
+        )
+
+        self.save_model(folder="models/classification/gradient_boosting", best_model=gb_best_model,
+            best_hyperparameters=gb_best_hyperparams, metrics=gb_metrics)
+        
+    def find_best_model(self, task_folder):
+
+        """
+
+        Finds the best-performing regression model among a predefined list of models.
+
+        Returns:
+            tuple: A tuple containing the best model, its hyperparameters, and performance metrics.
+
+        """
+
+        # Define a list of models and their respective folders
+        models_folders = [
+            ("Linear Regression", f"{task_folder}logistic_regression"),
+            ("Decision Tree", f"{task_folder}decision_tree"),
+            ("Random Forest", f"{task_folder}random_forest"),
+            ("Gradient Boosting", f"{task_folder}gradient_boosting")
+        ]
+
+        best_model_name = None
+        best_model = None
+        best_hyperparameters = {}
+        best_performance_metrics = {}
+        best_mean = float('inf')
+
+        for model_name, folder in models_folders:
+            # Load the model
+            model_filename = os.path.join(folder, "model.joblib")
+            loaded_model = joblib.load(model_filename)
+
+            # Load hyperparameters
+            hyperparameters_filename = os.path.join(folder, "hyperparameters.json")
+            with open(hyperparameters_filename, "r") as hyperparameters_file:
+                hyperparameters = json.load(hyperparameters_file)
+
+            # Load performance metrics
+            metrics_filename = os.path.join(folder, "metrics.json")
+            with open(metrics_filename, "r") as metrics_file:
+                performance_metrics = json.load(metrics_file)
+
+            # Check mean performance metric
+            Total = performance_metrics['validation_accuracy']+performance_metrics['precision']+performance_metrics['recall']+performance_metrics['f1_score']
+            mean = Total / 4
+
+            # Check if the current model has a lower RMSE
+            if mean < best_mean:
+                best_model_name = model_name
+                best_model = loaded_model
+                best_hyperparameters = hyperparameters
+                best_performance_metrics = performance_metrics
+
+        print("Best Model:", best_model_name)
+        print("Best Hyperparameters:", best_hyperparameters)
+        print("Best Performance Metrics:", best_performance_metrics)
+
+        return best_model, best_hyperparameters, best_performance_metrics
+    
+if __name__ == "__main__":
+    filepath = 'AirbnbData/Raw_Data/tabular_data/listing.csv'
+    airbnb_lr = AirbnbLogisticRegression()
+    #airbnb_lr.evaluate_all_models(path=filepath)
+    best_model, best_hyperparameters, best_performance_metrics = airbnb_lr.find_best_model("models/classification/")
+
+
+    """""
+
+    correlation_matrix = airbnb_lr.data.corr()
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", annot_kws={"size": 10})
+    plt.title('Correlation Heatmap of Numerical Columns')
+    plt.show()
+
+    """
+
+
+    #train_sizes = np.linspace(0.1, 1.0, 10) * len(airbnb_lr.train_split['xtrain'])
 
     # Compute the learning curves
-    performance_metrics = airbnb_lr.compute_learning_curves(airbnb_lr.model, train_sizes)
+    #performance_metrics = airbnb_lr.compute_learning_curves(airbnb_lr.model, train_sizes)
 
     # Plot the learning curves
-    airbnb_lr.plot_learning_curves(train_sizes, performance_metrics)
+    #airbnb_lr.plot_learning_curves(train_sizes, performance_metrics)
 
