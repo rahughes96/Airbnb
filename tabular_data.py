@@ -78,7 +78,6 @@ def clean_tabular_data(dataframe):
     
     """
 
-    #dataframe = dataframe.iloc[: ,:-1]
     dataframe = set_default_feature_values(dataframe)
     dataframe = remove_rows_with_missing_ratings(dataframe)
     dataframe = clean_description_strings(dataframe)
@@ -133,7 +132,7 @@ def load_data_classification(filepath):
         dataframe[column] = dataframe[column].astype(int)
 
 
-    dataframe[['Cleanliness_rating','Accuracy_rating','Communication_rating','Location_rating','Value_rating']] = dataframe[['Cleanliness_rating','Accuracy_rating','Communication_rating','Location_rating','Value_rating']].dropna(axis=1)
+    dataframe[['Cleanliness_rating','Accuracy_rating','Communication_rating','Location_rating','Value_rating']].dropna(axis=1, inplace=True)
     return dataframe
 
 if __name__ == "__main__":
@@ -141,12 +140,6 @@ if __name__ == "__main__":
     Airbnb_data = pd.read_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/tabular_data/listing.csv')
     print("Cleaning...")
     cleaned_airbnb_data = clean_tabular_data(Airbnb_data)
-    #try:
     cleaned_airbnb_data.to_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv')
-    print(cleaned_airbnb_data.loc[845])
-    #except FileExistsError:
-    
-        #pass
 
-    (features, labels) = load_airbnb(Airbnb_data, "Price_Night")
     print("done")

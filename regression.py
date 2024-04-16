@@ -39,11 +39,14 @@ class MGS():
 
         airbnb_data = pd.read_csv(path)
         cleaned_airbnb_data = clean_tabular_data(airbnb_data)
-        cleaned_airbnb_data[['Cleanliness_rating','Accuracy_rating','Communication_rating','Location_rating','Check-in_rating','Value_rating','Description']] = cleaned_airbnb_data[['Cleanliness_rating','Accuracy_rating','Communication_rating','Location_rating','Check-in_rating','Value_rating','Description']].dropna()
-        cleaned_airbnb_data.to_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/tabular_data/listing_test.csv')
-    
+        cleaned_airbnb_data[['Cleanliness_rating',
+                             'Accuracy_rating',
+                             'Communication_rating',
+                             'Location_rating',
+                             'Check-in_rating',
+                             'Value_rating',
+                             'Description']].dropna(inplace=True)
 
-        print("Cleaned Airbnb data:", cleaned_airbnb_data.head())
 
         (X, y) = load_airbnb_regression(cleaned_airbnb_data, label)
         X = scale(X)
@@ -281,7 +284,7 @@ class MGS():
         print("Load and clean the data")
         airbnb_data = pd.read_csv(path)
         cleaned_airbnb_data = clean_tabular_data(airbnb_data).dropna()
-        cleaned_airbnb_data.to_csv('AirbnbData/Raw_Data/tabular_data/listing.csv')
+        #cleaned_airbnb_data.to_csv('AirbnbData/Raw_Data/tabular_data/listing.csv')
 
         (X, y) = load_airbnb_regression(cleaned_airbnb_data, label)
 
@@ -457,7 +460,9 @@ class MGS():
 if __name__ == "__main__":
     mgs = MGS()
 
+    #mgs.sgd('AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv', 'Price_Night', plot=True)
+
     print("Evaluate all models")
-    mgs.evaluate_all_models('AirbnbData/Raw_Data/tabular_data/listing.csv', 'Price_Night', plot=False)
+    mgs.evaluate_all_models('AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv', 'Price_Night', plot=False)
 
     best_model, best_hyperparameters, best_performance_metrics = mgs.find_best_model("models/regression/")

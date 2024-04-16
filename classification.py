@@ -59,7 +59,7 @@ class AirbnbLogisticRegression:
     def train_model(self):
         #print(self.X_train)
         # Train logistic regression model
-        self.model = LogisticRegression(solver= 'liblinear', max_iter=100)
+        self.model = LogisticRegression(solver= 'liblinear', max_iter=9000)
         self.model.fit(self.train_split["xtrain"], self.train_split["ytrain"])
 
     def preprocess_data(self):
@@ -121,7 +121,8 @@ class AirbnbLogisticRegression:
             estimator=model_class(),
             param_grid=param_grid,
             scoring='accuracy',  # Use accuracy for classification
-            cv=5
+            cv=5, 
+            error_score='raise'
         )
 
         grid_search.fit(xtrain, ytrain)
@@ -218,13 +219,15 @@ class AirbnbLogisticRegression:
 
     def evaluate_all_models(self, path):
         self.load_data(path)
+        self.preprocess_data()
+        self.train_model()
 
         print("Evaluate Logistic Regression")
         log_hyperparameters = {
         'C': [0.1, 1, 10],
         'penalty': ['l1', 'l2'],
-        'solver': ['liblinear', 'saga']
-        }
+        'solver': ['liblinear', 'saga'],
+        'max_iter': [5000]}
 
         log_best_model, log_best_hyperparams, log_metrics = self.tune_classification_model_hyperparameters(
             model_class=LogisticRegression,
@@ -243,7 +246,7 @@ class AirbnbLogisticRegression:
             'max_depth': [None, 10, 20, 30],
             'min_samples_split': [2, 5, 10],
             'min_samples_leaf': [1, 2, 4],
-            'max_features': ['auto', 'sqrt', 'log2']
+            'max_features': ['sqrt', 'log2', None]
         }
 
         dt_best_model, dt_best_hyperparams, dt_metrics = self.tune_classification_model_hyperparameters(
@@ -265,7 +268,7 @@ class AirbnbLogisticRegression:
             'max_depth': [10, 20, 30, None],
             'min_samples_split': [2, 5, 10],
             'min_samples_leaf': [1, 2, 4],
-            'max_features': ['auto', 'sqrt', 'log2']
+            'max_features': ['sqrt', 'log2', None]
         }
 
         rf_best_model, rf_best_hyperparams, rf_metrics = self.tune_classification_model_hyperparameters(
@@ -348,7 +351,7 @@ class AirbnbLogisticRegression:
             mean = Total / 4
 
             # Check if the current model has a lower RMSE
-            if mean < best_mean:
+            if mean > best_mean:
                 best_model_name = model_name
                 best_model = loaded_model
                 best_hyperparameters = hyperparameters
@@ -361,9 +364,10 @@ class AirbnbLogisticRegression:
         return best_model, best_hyperparameters, best_performance_metrics
     
 if __name__ == "__main__":
-    filepath = 'AirbnbData/Raw_Data/tabular_data/listing.csv'
+    filepath = 'AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv'
+
     airbnb_lr = AirbnbLogisticRegression()
-    #airbnb_lr.evaluate_all_models(path=filepath)
+    airbnb_lr.evaluate_all_models(path=filepath)
     best_model, best_hyperparameters, best_performance_metrics = airbnb_lr.find_best_model("models/classification/")
 
 
