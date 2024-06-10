@@ -38,7 +38,8 @@ class ImageDeveloper:
             os.mkdir(f"/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Processed_Data/processed_images/{self.filename[:-6]}")
         except FileExistsError:
             pass
-        cv2.imwrite(f"/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Processed_Data/processed_images/{self.filename[:-6]}/{self.filename}", output)
+        cv2.imwrite(f"/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Processed_Data/processed_images/
+                    {self.filename[:-6]}/{self.filename}", output)
 
 
 def prep_images(path):

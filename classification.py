@@ -3,7 +3,6 @@ import numpy as np
 import joblib
 import json
 import os
-import seaborn as sns
 import matplotlib.pyplot as plt
 from tabular_data import load_data_classification
 from sklearn.model_selection import train_test_split
@@ -329,7 +328,7 @@ class AirbnbLogisticRegression:
         best_model = None
         best_hyperparameters = {}
         best_performance_metrics = {}
-        best_mean = float('inf')
+        best_mean = 0
 
         for model_name, folder in models_folders:
             # Load the model

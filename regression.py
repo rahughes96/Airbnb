@@ -460,9 +460,7 @@ class MGS():
 if __name__ == "__main__":
     mgs = MGS()
 
-    #mgs.sgd('AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv', 'Price_Night', plot=True)
-
     print("Evaluate all models")
-    mgs.evaluate_all_models('AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv', 'Price_Night', plot=False)
+    mgs.evaluate_all_models('AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv', 'Price_Night', plot=True)
 
     best_model, best_hyperparameters, best_performance_metrics = mgs.find_best_model("models/regression/")

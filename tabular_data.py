@@ -71,7 +71,8 @@ def clean_tabular_data(dataframe):
 
     """
 
-    Compiles the three previous functions into one by removing rows with missing values, cleaning the description strings andsetting the default feature values.
+    Compiles the three previous functions into one by removing rows with missing values, cleaning the description strings andsetting 
+    the default feature values.
 
     Attributes:
         Dataframe (df): The raw dataframe of the listings file 
@@ -88,8 +89,8 @@ def load_airbnb_regression(dataframe,label=None):
 
     """
 
-    Assigns the features and labels into a tuple, where the labels is the set of values you are wanting to predict (in this case it will be the Price_Night),
-    ad the festures is the set of all other numerical data  
+    Assigns the features and labels into a tuple, where the labels is the set of values you are wanting to predict (in this case it will
+    be the Price_Night), and the features is the set of all other numerical data  
 
     Attributes:
         Dataframe (df): The raw dataframe of the listings file 
