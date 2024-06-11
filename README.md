@@ -60,6 +60,10 @@ All the data is now prepped and ready for training.
 
 3.Regression Model
 
+The script begins by defining a class, ewhich will then be used to store certain key values that will be used throughout the training of this model.
+
+<img width="1092" alt="Screenshot 2024-06-11 at 20 32 16" src="https://github.com/rahughes96/Airbnb/assets/102994234/0df00aec-c57c-4a0a-86d7-1724ea789a4e">
+
 In order to gain a better understanding of how it works, the first thing to do is create a simple regression model. This will pull the data in, split it into training and test sets, train our model, calculate the performance metrics and plot the results. This is done using the built in SGDRegressor provided in SKlearn.
 
 <img width="1075" alt="Screenshot 2024-06-10 at 21 35 48" src="https://github.com/rahughes96/Airbnb/assets/102994234/5e6396c8-1516-4439-b7d8-333dcf217d5d">
@@ -101,3 +105,10 @@ Within the if __name__ == "__main__" block, we can now call evaluate_all_models 
 <img width="639" alt="Screenshot 2024-06-10 at 21 44 47" src="https://github.com/rahughes96/Airbnb/assets/102994234/6ae85d3a-9a26-4090-948f-70bff6d83112">
 
 4.Classification Model
+
+First we define our class, which will again be used to store the key vlues used in the training of the classification model.
+
+<img width="1099" alt="Screenshot 2024-06-11 at 20 33 41" src="https://github.com/rahughes96/Airbnb/assets/102994234/e8930b4e-f161-426a-8af9-ec027e327a22">
+
+Similarly as before with the regression model, the data is loaded in but this time category is the label. A simple logistic regression model is trained to predict the category from the tabular data.
+
