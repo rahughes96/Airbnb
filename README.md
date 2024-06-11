@@ -9,7 +9,8 @@ AIcore Specialisation
 5. Configurable Neural Network
 6. Reusing Framework
 
-1. Intro
+*1. Intro*
+
 The aim of this project is to Model Airbnb’s property listing dataset. Build a framework that systematically train, tune, and evaluate models on several tasks that are tackled by the Airbnb team.
 
 To begin with the data is loaded in and cleaned in preparation. This includes the full dataset and pictures that need to be resized for consistency. Then a simple linear regression model is built to predict the price per night feature, then try with different models, including gradient boosting, random forest and decision trees, to beat the baseline model.
@@ -18,7 +19,7 @@ Classification
 Neural
 Reuse
 
-2.Data Preparation
+*2.Data Preparation*
 
 The file AirBnbData.csv is downloaded from the zip file provided. The python file tabular_data.py is used to store all the functionality of cleaning the tabular data. Starting by defining a function called remove_rows_with_missing_ratings which removes the rows with missing values from the columns in the dataset:
 
@@ -58,7 +59,7 @@ Within the if __name__ == "__main__" block the python library "Glob" is used to 
 
 All the data is now prepped and ready for training.
 
-3.Regression Model
+*3.Regression Model*
 
 The script begins by defining a class, ewhich will then be used to store certain key values that will be used throughout the training of this model.
 
@@ -110,5 +111,21 @@ First we define our class, which will again be used to store the key vlues used 
 
 <img width="1099" alt="Screenshot 2024-06-11 at 20 33 41" src="https://github.com/rahughes96/Airbnb/assets/102994234/e8930b4e-f161-426a-8af9-ec027e327a22">
 
-Similarly as before with the regression model, the data is loaded in but this time category is the label. A simple logistic regression model is trained to predict the category from the tabular data.
+Similarly as before with the regression model, the data is loaded in but this time "category" is the label. A simple logistic regression model is trained to predict the category from the tabular data. This is done by using a few functions in tandem, as shown. First we load the data and split it into are train and test sets
 
+<img width="1099" alt="Screenshot 2024-06-11 at 20 43 47" src="https://github.com/rahughes96/Airbnb/assets/102994234/61bac610-d43c-448c-a1b7-62dd032d2a74">
+
+We then need to scale our data before training it as follows
+
+<img width="1083" alt="Screenshot 2024-06-11 at 20 46 46" src="https://github.com/rahughes96/Airbnb/assets/102994234/9b7c49fc-5c81-44bb-bf08-39b37dc9c996">
+<img width="1084" alt="Screenshot 2024-06-11 at 20 47 04" src="https://github.com/rahughes96/Airbnb/assets/102994234/164b31c5-dd45-4414-9701-a49ac2b9842f">
+
+We can then evaluate the performance of the model by gathering and storing the relevant metrics. What we want to do from here is to see how its performance compares to the models we will train next.
+
+<img width="1081" alt="Screenshot 2024-06-11 at 20 51 56" src="https://github.com/rahughes96/Airbnb/assets/102994234/8b4a2afc-44d7-4014-991b-14ca8a37f757">
+
+As with the regression model, we need a method of tuning the hyperparameters. This time we will be using validation acuracy to decide which is the best model.
+
+<img width="1081" alt="Screenshot 2024-06-11 at 21 06 09" src="https://github.com/rahughes96/Airbnb/assets/102994234/e53cba66-484b-4fd3-8cfd-b23c2e4ccf14">
+
+We will again need to have funtions to save pur model and plot the results. This time we will plot a confusion matrix
