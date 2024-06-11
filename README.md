@@ -129,3 +129,7 @@ As with the regression model, we need a method of tuning the hyperparameters. Th
 <img width="1081" alt="Screenshot 2024-06-11 at 21 06 09" src="https://github.com/rahughes96/Airbnb/assets/102994234/e53cba66-484b-4fd3-8cfd-b23c2e4ccf14">
 
 We will again need to have funtions to save pur model and plot the results. This time we will plot a confusion matrix
+
+
+
+<img width="1000" alt="Screenshot 2024-06-11 at 22 11 49" src="https://github.com/rahughes96/Airbnb/assets/102994234/dba9018b-f06f-4663-acd3-8b0084567dcd">
