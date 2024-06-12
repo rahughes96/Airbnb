@@ -103,9 +103,11 @@ We now want to beat opur baseline model with decision trees, random forests, and
 
 Within the if __name__ == "__main__" block, we can now call evaluate_all_models function, in our case we can see that gradient boosting provides the best model. If we set plot=True, we can see this visualised.
 
+<img width="1097" alt="Screenshot 2024-06-12 at 21 52 33" src="https://github.com/rahughes96/Airbnb/assets/102994234/5cd89fb0-f774-4a7d-9b86-72184b408d5d">
+
 <img width="639" alt="Screenshot 2024-06-10 at 21 44 47" src="https://github.com/rahughes96/Airbnb/assets/102994234/6ae85d3a-9a26-4090-948f-70bff6d83112">
 
-4.Classification Model
+*4.Classification Model*
 
 First we define our class, which will again be used to store the key vlues used in the training of the classification model.
 
