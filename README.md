@@ -128,8 +128,26 @@ As with the regression model, we need a method of tuning the hyperparameters. Th
 
 <img width="1081" alt="Screenshot 2024-06-11 at 21 06 09" src="https://github.com/rahughes96/Airbnb/assets/102994234/e53cba66-484b-4fd3-8cfd-b23c2e4ccf14">
 
-We will again need to have funtions to save pur model and plot the results. This time we will plot a confusion matrix
+We will again need to have funtions to save our model and plot the results. This time we will plot a confusion matrix to visualise the acuracy the model has in predicting the category.
 
+<img width="1068" alt="Screenshot 2024-06-12 at 21 22 53" src="https://github.com/rahughes96/Airbnb/assets/102994234/64df487b-529e-4ddd-8f9e-c1544135ff08">
 
+<img width="1083" alt="Screenshot 2024-06-12 at 21 23 32" src="https://github.com/rahughes96/Airbnb/assets/102994234/a7ca3ed2-0ef4-40b9-8343-51f18889a65e">
+
+Once again, we will now try and beat the baseline logistic regression model with by using random forest, decision trees and gradient boosting. As before we will create a funtion called evaluate all models, which will apply the tune_classification_model_hyperparameters function to each of these to tune their hyperparameters before evaluating them, plotting their results and saving the hyperparameters, performance metrics and model in the appropriate folder.
+
+<img width="1086" alt="Screenshot 2024-06-12 at 21 34 08" src="https://github.com/rahughes96/Airbnb/assets/102994234/4258afa9-019d-42ed-8603-dcd6721d0969">
+<img width="1082" alt="Screenshot 2024-06-12 at 21 34 41" src="https://github.com/rahughes96/Airbnb/assets/102994234/2366c808-e148-40ce-89d9-0f079e4ea5ee">
+<img width="1051" alt="Screenshot 2024-06-12 at 21 35 03" src="https://github.com/rahughes96/Airbnb/assets/102994234/b0aa1870-acb9-4bdb-8238-5db5af1f8de7">
+<img width="1054" alt="Screenshot 2024-06-12 at 21 35 25" src="https://github.com/rahughes96/Airbnb/assets/102994234/a443cf0b-ccb8-4380-9546-e6e7c1cc2fda">
+
+In order to find the best model, a function is created that wil loop through the classification models folder and select the model which has the best validation accuracy and return the model name, a dictionary of its hyperparameters and a dictionary of its performance metrics.
+
+<img width="1083" alt="Screenshot 2024-06-12 at 21 49 01" src="https://github.com/rahughes96/Airbnb/assets/102994234/95322c28-837f-4573-9a98-b0152dafc1bd">
+<img width="1052" alt="Screenshot 2024-06-12 at 21 49 22" src="https://github.com/rahughes96/Airbnb/assets/102994234/1ecdc18f-8255-468b-99fe-d71679256a63">
+
+Within the if __name__ == "__main__" block, we can now call evaluate_all_models function, in our case we can see that gradient boosting provides the best model. If we set plot=True, we can see this visualised.
+
+<img width="1090" alt="Screenshot 2024-06-12 at 21 50 56" src="https://github.com/rahughes96/Airbnb/assets/102994234/96d93fce-cfc5-41ab-8c9f-d7189918cc35">
 
 <img width="1000" alt="Screenshot 2024-06-11 at 22 11 49" src="https://github.com/rahughes96/Airbnb/assets/102994234/dba9018b-f06f-4663-acd3-8b0084567dcd">
