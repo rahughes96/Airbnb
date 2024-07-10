@@ -149,3 +149,8 @@ In order to find the best model, a function is created that wil loop through the
 <img width="1052" alt="Screenshot 2024-06-12 at 21 49 22" src="https://github.com/rahughes96/Airbnb/assets/102994234/1ecdc18f-8255-468b-99fe-d71679256a63">
 
 Within the if __name__ == "__main__" block, we can now call evaluate_all_models function, in our case we can see that gradient boosting provides the best model. If we set plot=True, we can see this visualised.
+
+
+<img width="1090" alt="Screenshot 2024-06-12 at 21 50 56" src="https://github.com/rahughes96/Airbnb/assets/102994234/96d93fce-cfc5-41ab-8c9f-d7189918cc35">
+
+<img width="1000" alt="Screenshot 2024-06-11 at 22 11 49" src="https://github.com/rahughes96/Airbnb/assets/102994234/dba9018b-f06f-4663-acd3-8b0084567dcd">
