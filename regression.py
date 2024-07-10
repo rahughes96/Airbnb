@@ -265,7 +265,6 @@ class MGS():
         metrics_filename = os.path.join(folder, "metrics.json")
         with open(metrics_filename, "w") as metrics_file:
             json.dump(metrics, metrics_file, indent=4)
-
     
     def evaluate_all_models(self, path, label, plot = True):
 

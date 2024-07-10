@@ -3,6 +3,8 @@ import numpy as np
 import joblib
 import json
 import os
+import seaborn as sns
+from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 from tabular_data import load_data_classification
 from sklearn.model_selection import train_test_split
@@ -29,17 +31,25 @@ class AirbnbLogisticRegression:
         self.valid_accuracy_history = []  # Store validation accuracy history
 
     def load_data(self, filepath):
+
+        """
+
+        Loads classification data from a specified file, splits it into training, validation, 
+        and test sets, and stores these splits along with the full dataset in the instance.
+
+        Parameters:
+            filepath (str): The path to the file containing the data to be loaded.
+
+        """
         dataframe = load_data_classification(filepath)
 
         # Split data into features and target variable
         X = dataframe.drop(columns=['Category'])
         y = dataframe['Category']
-        #print(train_test_split(X, y, test_size=0.2, random_state=42))
 
         # Split data into train and test sets
         x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
         x_train, x_valid, y_train, y_valid = train_test_split(x_train, y_train, test_size=0.5, random_state=42)
-        #print(self.y_train)
 
         self.train_split = {
             'xtrain': x_train,
@@ -51,17 +61,35 @@ class AirbnbLogisticRegression:
         }
 
         self.data = dataframe
-        #self.data.to_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/tabular_data/classification_data_test.csv')
 
         return self.data
 
     def train_model(self):
-        #print(self.X_train)
-        # Train logistic regression model
+
+        """
+
+        Trains a logistic regression model using the training data stored in the instance.
+
+        The model is trained with a 'liblinear' solver and a maximum of 9000 iterations.
+        The trained model is stored in the instance variable 'model'.
+
+        """
+
         self.model = LogisticRegression(solver= 'liblinear', max_iter=9000)
         self.model.fit(self.train_split["xtrain"], self.train_split["ytrain"])
 
     def preprocess_data(self):
+
+        """
+
+        Preprocesses the training, validation, and test data by standardizing the features.
+
+        A StandardScaler is used to scale the features of the training data and the same 
+        scaling parameters are applied to the validation and test data. The scaled data 
+        replaces the original data in the instance's train_split dictionary.
+
+        """
+
         scaler = StandardScaler()
 
         self.train_split["xtrain"] = scaler.fit_transform(self.train_split['xtrain'])
@@ -71,35 +99,62 @@ class AirbnbLogisticRegression:
         #self.X_train = scaler.fit_transform(self.train_split['xtrain'])
         #self.X_test = scaler.transform(self.train_split['xtest'])
         #self.X_valid = scaler.transform(self.train_split['xvalid'])
+
+    def plot_predictions(self, model, xtest, ytest, title):
+
+        """
+        Plots the predictions of a classification model using a confusion matrix.
+
+        Parameters:
+            model: The trained classification model.
+            xtest: The test features.
+            ytest: The true labels for the test set.
+            title (str): The title for the plot.
+
+        Returns:
+            None
+        """
+        # Generate predictions
+        ypred = model.predict(xtest)
+
+        # Compute confusion matrix
+        cm = confusion_matrix(ytest, ypred)
+
+        # Plot the confusion matrix
+        plt.figure(figsize=(10, 7))
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=model.classes_, yticklabels=model.classes_)
+        plt.xlabel('Predicted Label')
+        plt.ylabel('True Label')
+        plt.title(title)
+        plt.show()
     
     def evaluate_model(self):
+
+        """
+        Evaluates the trained model on the training and test sets, computing and printing 
+        various performance metrics including accuracy, precision, recall, and F1 score.
+
+        The metrics are computed for both the training and test sets and printed to the console.
+        """
+
         # Predictions on training set
         train_predictions = self.model.predict(self.train_split["xtrain"])
-
         # Predictions on test set
         test_predictions = self.model.predict(self.train_split["xtest"])
-
         # Compute accuracy for training set
         train_accuracy = accuracy_score(self.train_split["ytrain"], train_predictions)
-
         # Compute accuracy for test set
         test_accuracy = accuracy_score(self.train_split["ytest"], test_predictions)
-
         # Compute precision for training set
         train_precision = precision_score(self.train_split["ytrain"], train_predictions, average='weighted')
-
         # Compute precision for test set
         test_precision = precision_score(self.train_split["ytest"], test_predictions, average='weighted')
-
         # Compute recall for training set
         train_recall = recall_score(self.train_split["ytrain"], train_predictions, average='weighted')
-
         # Compute recall for test set
         test_recall = recall_score(self.train_split["ytest"], test_predictions, average='weighted')
-
         # Compute F1 score for training set
         train_f1_score = f1_score(self.train_split["ytrain"], train_predictions, average='weighted')
-
         # Compute F1 score for test set
         test_f1_score = f1_score(self.train_split["ytest"], test_predictions, average='weighted')
         
@@ -116,6 +171,24 @@ class AirbnbLogisticRegression:
         print("F1 Score:", test_f1_score)     
     
     def tune_classification_model_hyperparameters(self, model_class, xtrain, ytrain, xvalid, yvalid, param_grid):
+
+        """
+
+        Tunes hyperparameters for a classification model using grid search with cross-validation.
+
+        The best model, its hyperparameters, and performance metrics on the validation set 
+        are stored in the instance and returned.
+
+        Parameters:
+            model_class (class): The classification model class to be tuned.
+            xtrain (pd.DataFrame or np.ndarray): The training feature data.
+            ytrain (pd.Series or np.ndarray): The training target data.
+            xvalid (pd.DataFrame or np.ndarray): The validation feature data.
+            yvalid (pd.Series or np.ndarray): The validation target data.
+            param_grid (dict): The hyperparameter grid to search over.
+
+        """
+
         grid_search = GridSearchCV(
             estimator=model_class(),
             param_grid=param_grid,
@@ -150,6 +223,22 @@ class AirbnbLogisticRegression:
         return self.best_model, self.best_hyperparameters, performance_metrics
     
     def compute_learning_curves(self, model, train_sizes):
+
+        """
+
+        Computes learning curves by training the model on increasing sizes of the training data
+        and evaluating its performance on both the training and validation sets.
+
+        Parameters:
+            model: The machine learning model to be trained and evaluated.
+            train_sizes (list or array): List or array of training set sizes to use for computing the learning curves.
+
+        Returns:
+            dict: A dictionary containing performance metrics for the training and validation sets
+                at each training size.
+
+        """
+
         performance_metrics = {'train': [], 'validation': []}
 
         for size in train_sizes:
@@ -175,6 +264,19 @@ class AirbnbLogisticRegression:
         return performance_metrics
     
     def plot_learning_curves(self, train_sizes, performance_metrics):
+
+        """
+
+        Plots learning curves that show the performance of the model on both the training and
+        validation sets as the size of the training set increases.
+
+        Parameters:
+            train_sizes (list or array): List or array of training set sizes used for computing the learning curves.
+            performance_metrics (dict): Dictionary containing performance metrics for the training and validation sets
+                                        at each training size.
+
+        """
+
         plt.figure(figsize=(10, 6))
         plt.plot(train_sizes, performance_metrics['train'], label='Training')
         plt.plot(train_sizes, performance_metrics['validation'], label='Validation')
@@ -216,7 +318,19 @@ class AirbnbLogisticRegression:
         with open(metrics_filename, "w") as metrics_file:
             json.dump(metrics, metrics_file, indent=4)
 
-    def evaluate_all_models(self, path):
+    def evaluate_all_models(self, path, plot=True):
+
+        """
+
+        Loads data, preprocesses it, trains a baseline model, and then tunes, evaluates, and saves
+        multiple classification models including Logistic Regression, Decision Tree, Random Forest,
+        and Gradient Boosting.
+
+        Parameters:
+            path (str): The path to the file containing the data to be loaded.
+
+        """    
+
         self.load_data(path)
         self.preprocess_data()
         self.train_model()
@@ -239,6 +353,11 @@ class AirbnbLogisticRegression:
 
         self.save_model(folder="models/classification/logistic_regression", best_model=log_best_model,
             best_hyperparameters=log_best_hyperparams, metrics=log_metrics)
+        
+        xtest_log = self.train_split['xtest']
+        ytest_log = self.train_split['ytest']
+        if plot:
+            self.plot_predictions(model=log_best_model, xtest=xtest_log, ytest=ytest_log, title="Logistic Regression Predictions")
 
         print("Evaluate Decision Tree")
         dt_hyperparameters = {
@@ -260,6 +379,10 @@ class AirbnbLogisticRegression:
         self.save_model(folder="models/classification/decision_tree", best_model=dt_best_model,
             best_hyperparameters=dt_best_hyperparams, metrics=dt_metrics)
 
+        xtest_dt = self.train_split['xtest']
+        ytest_dt = self.train_split['ytest']
+        if plot:
+            self.plot_predictions(model=dt_best_model, xtest=xtest_dt, ytest=ytest_dt, title="Decision Tree")
 
         print("Evaluate Random Forest")
         rf_hyperparameters = {
@@ -282,6 +405,10 @@ class AirbnbLogisticRegression:
         self.save_model(folder="models/classification/random_forest", best_model=rf_best_model,
             best_hyperparameters=rf_best_hyperparams, metrics=rf_metrics)
 
+        xtest_rf = self.train_split['xtest']
+        ytest_rf = self.train_split['ytest']
+        if plot:
+            self.plot_predictions(model=rf_best_model, xtest=xtest_rf, ytest=ytest_rf, title="Random Forest Predictions")
 
         print("Evaluate Gradient Boosting")
         gb_hyperparameters = {
@@ -304,6 +431,12 @@ class AirbnbLogisticRegression:
 
         self.save_model(folder="models/classification/gradient_boosting", best_model=gb_best_model,
             best_hyperparameters=gb_best_hyperparams, metrics=gb_metrics)
+        
+        xtest_gb = self.train_split['xtest']
+        ytest_gb = self.train_split['ytest']
+
+        if plot:
+            self.plot_predictions(model=gb_best_model, xtest=xtest_gb, ytest=ytest_gb, title="Gradient Boosting Predictions")
         
     def find_best_model(self, task_folder):
 
@@ -328,7 +461,7 @@ class AirbnbLogisticRegression:
         best_model = None
         best_hyperparameters = {}
         best_performance_metrics = {}
-        best_mean = 0
+        best_validation_accuracy = 0
 
         for model_name, folder in models_folders:
             # Load the model
@@ -345,12 +478,11 @@ class AirbnbLogisticRegression:
             with open(metrics_filename, "r") as metrics_file:
                 performance_metrics = json.load(metrics_file)
 
-            # Check mean performance metric
-            Total = performance_metrics['validation_accuracy']+performance_metrics['precision']+performance_metrics['recall']+performance_metrics['f1_score']
-            mean = Total / 4
+            # Check performance metric
+            validation_accuracy = performance_metrics['validation_accuracy']
 
             # Check if the current model has a lower RMSE
-            if mean > best_mean:
+            if validation_accuracy > best_validation_accuracy:
                 best_model_name = model_name
                 best_model = loaded_model
                 best_hyperparameters = hyperparameters
