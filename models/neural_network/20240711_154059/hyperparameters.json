@@ -1,0 +1,10 @@
+{
+    "depth": 2,
+    "hidden_layer_width": 32,
+    "optimiser": {
+        "name": "SGD",
+        "learning_rate": 0.01
+    },
+    "dropout_prob": 0.0,
+    "weight_decay": 0.0
+}

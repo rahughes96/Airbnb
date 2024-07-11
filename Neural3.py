@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import root_mean_squared_error, r2_score
 import yaml
 import json
 import os
@@ -73,7 +73,7 @@ def evaluate(model, dataloader, criterion):
     avg_val_loss = val_loss / len(dataloader)
     all_labels = np.concatenate(all_labels)
     all_outputs = np.concatenate(all_outputs)
-    rmse = mean_squared_error(all_labels, all_outputs, squared=False)
+    rmse = root_mean_squared_error(all_labels, all_outputs)
     r2 = r2_score(all_labels, all_outputs)
     return avg_val_loss, rmse, r2
 

@@ -1,0 +1,8 @@
+{
+    "depth": 2,
+    "hidden_layer_width": 16,
+    "optimiser": {
+        "name": "SGD",
+        "learning_rate": 0.01
+    }
+}

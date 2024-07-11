@@ -1,0 +1,10 @@
+{
+    "depth": 2,
+    "hidden_layer_width": 32,
+    "optimiser": {
+        "name": "Adam",
+        "learning_rate": 0.001
+    },
+    "dropout_prob": 0.2,
+    "weight_decay": 0.0001
+}

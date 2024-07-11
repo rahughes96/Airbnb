@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import root_mean_squared_error, r2_score
 import yaml
 import json
 import os
@@ -42,21 +42,28 @@ class AirbnbNightlyPriceRegressionDataset(Dataset):
         return features, label
 
 class AirbnbPriceModel(nn.Module):
-    def __init__(self, input_dim, config):
+    def __init__(self, input_dim, config, dropout_prob):
         super(AirbnbPriceModel, self).__init__()
+        hidden_layer_width = config['hidden_layer_width']
+        depth = config['depth']
+        dropout_prob = config.get('dropout_prob', 0.0)  # Default to 0.0 if not provided
+
         layers = []
-        layers.append(nn.Linear(input_dim, config['hidden_layer_width']))
-        layers.append(nn.BatchNorm1d(config['hidden_layer_width']))
+        layers.append(nn.Linear(input_dim, hidden_layer_width))
         layers.append(nn.ReLU())
-        for _ in range(config['depth'] - 1):
-            layers.append(nn.Linear(config['hidden_layer_width'], config['hidden_layer_width']))
-            layers.append(nn.BatchNorm1d(config['hidden_layer_width']))
+        layers.append(nn.Dropout(dropout_prob))  # Add dropout after activation
+
+        for _ in range(depth - 1):
+            layers.append(nn.Linear(hidden_layer_width, hidden_layer_width))
             layers.append(nn.ReLU())
-        layers.append(nn.Linear(config['hidden_layer_width'], 1))
+            layers.append(nn.Dropout(dropout_prob))  # Add dropout after activation
+
+        layers.append(nn.Linear(hidden_layer_width, 1))
         self.model = nn.Sequential(*layers)
 
     def forward(self, x):
         return self.model(x)
+
 
 def evaluate(model, dataloader, criterion):
     model.eval()  # Set the model to evaluation mode
@@ -73,8 +80,7 @@ def evaluate(model, dataloader, criterion):
     avg_val_loss = val_loss / len(dataloader)
     all_labels = np.concatenate(all_labels)
     all_outputs = np.concatenate(all_outputs)
-    # Changed mean_squared_error to root_mean_squared_error to avoid deprecation warning
-    rmse = mean_squared_error(all_labels, all_outputs, squared=False)
+    rmse = root_mean_squared_error(all_labels, all_outputs)
     r2 = r2_score(all_labels, all_outputs)
     return avg_val_loss, rmse, r2
 
@@ -157,23 +163,29 @@ def calculate_inference_latency(model, dataloader, num_samples=100):
     return avg_latency
 
 def generate_nn_configs():
-    depths = [2, 3, 4, 5]
-    hidden_layer_widths = [16, 32, 64, 128]
-    learning_rates = [0.01, 0.001]
-    optimisers = ['SGD', 'Adam']
-
+    depths = [2]  # Fixed at 2 layers for fine-tuning
+    hidden_layer_widths = [128]  # Fixed at 128 units for fine-tuning
+    learning_rates = [0.01, 0.001, 0.0001]  # Different learning rates to try
+    dropout_probs = [0.0, 0.1, 0.2]  # Different dropout probabilities to try
+    weight_decays = [0.0, 0.0001, 0.001]  # Different weight decays to try
+    optimisers = ['Adam']  # Fixed optimiser for fine-tuning
+    
     configs = []
-    for depth, width, lr, opt in itertools.product(depths, hidden_layer_widths, learning_rates, optimisers):
+    for depth, width, lr, dropout_prob, weight_decay, opt in itertools.product(depths, hidden_layer_widths, learning_rates, dropout_probs, weight_decays, optimisers):
         config = {
             'depth': depth,
             'hidden_layer_width': width,
             'optimiser': {
                 'name': opt,
                 'learning_rate': lr
-            }
+            },
+            'dropout_prob': dropout_prob,
+            'weight_decay': weight_decay
         }
         configs.append(config)
-    return configs
+        
+    return configs[:16]  # Select the first 16 configurations
+
 
 def find_best_nn(train_loader, val_loader, test_loader, epochs, writer):
     best_rmse = float('inf')
@@ -184,9 +196,9 @@ def find_best_nn(train_loader, val_loader, test_loader, epochs, writer):
 
     for config in configs:
         input_dim = len(numerical_features)
-        model = AirbnbPriceModel(input_dim, config)
+        model = AirbnbPriceModel(input_dim, config, dropout_prob=config['dropout_prob'])
         criterion = nn.MSELoss()
-        optimizer = getattr(optim, config['optimiser']['name'])(model.parameters(), lr=config['optimiser']['learning_rate'])
+        optimizer = getattr(optim, config['optimiser']['name'])(model.parameters(), lr=config['optimiser']['learning_rate'], weight_decay=config['weight_decay'])
 
         training_duration = train(model, train_loader, val_loader, epochs, criterion, optimizer, writer)
 
@@ -243,4 +255,5 @@ if __name__ == "__main__":
 
     print("Best Model Config:", best_config)
     print("Best Model Metrics:", best_metrics)
+
 
