@@ -1,0 +1,8 @@
+{
+    "depth": 5,
+    "hidden_layer_width": 16,
+    "optimiser": {
+        "name": "Adam",
+        "learning_rate": 0.01
+    }
+}

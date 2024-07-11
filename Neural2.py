@@ -1,4 +1,11 @@
+import itertools
 import torch
+import yaml
+import json
+import os
+import datetime
+import time
+import tabular_data
 from torch.utils.data import Dataset, DataLoader, random_split
 import pandas as pd
 import numpy as np
@@ -6,12 +13,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_squared_error, r2_score
-import yaml
-import json
-import os
-import datetime
-import time
+from sklearn.metrics import root_mean_squared_error, r2_score
+
 
 # Define numerical features and label
 numerical_features = ['guests', 'beds', 'bathrooms', 'Cleanliness_rating', 'Accuracy_rating',
@@ -70,7 +73,8 @@ def evaluate(model, dataloader, criterion):
     avg_val_loss = val_loss / len(dataloader)
     all_labels = np.concatenate(all_labels)
     all_outputs = np.concatenate(all_outputs)
-    rmse = mean_squared_error(all_labels, all_outputs, squared=False)
+    # Changed mean_squared_error to root_mean_squared_error to avoid deprecation warning
+    rmse = root_mean_squared_error(all_labels, all_outputs, squared=False)
     r2 = r2_score(all_labels, all_outputs)
     return avg_val_loss, rmse, r2
 
@@ -90,34 +94,42 @@ def train(model, train_loader, val_loader, epochs, criterion, optimizer, writer)
 
             # Log weights and gradients
             for name, param in model.named_parameters():
-                writer.add_histogram(f'{name}.grad', param.grad, epoch)
-                writer.add_histogram(f'{name}', param, epoch)
+                if param.grad is not None:
+                    writer.add_histogram(f'{name}.grad', param.grad.detach().cpu().numpy(), epoch)
+                writer.add_histogram(f'{name}', param.detach().cpu().numpy(), epoch)
 
         avg_train_loss = running_loss / len(train_loader)
-        avg_val_loss, _, _ = evaluate(model, val_loader, criterion)
+        val_loss, _, _ = evaluate(model, val_loader, criterion)
 
         writer.add_scalar('Loss/Train', avg_train_loss, epoch)
-        writer.add_scalar('Loss/Validation', avg_val_loss, epoch)
+        writer.add_scalar('Loss/Validation', val_loss, epoch)
 
-        print(f"Epoch [{epoch+1}/{epochs}], Training Loss: {avg_train_loss:.4f}, Validation Loss: {avg_val_loss:.4f}")
+        print(f"Epoch [{epoch+1}/{epochs}], Training Loss: {avg_train_loss:.4f}, Validation Loss: {val_loss:.4f}")
 
     end_time = time.time()
     training_duration = end_time - start_time
     return training_duration
 
-def get_nn_config(config_file='nn_config.yaml'):
-    with open(config_file, 'r') as file:
-        config = yaml.safe_load(file)
-    return config
+def convert_metrics(metrics):
+    if isinstance(metrics, dict):
+        return {k: convert_metrics(v) for k, v in metrics.items()}
+    elif isinstance(metrics, np.float32):
+        return float(metrics)
+    else:
+        return metrics
 
-def save_model(model, config, metrics, model_path):
+def save_model(model, config, metrics, model_path, best_model=False):
     if not os.path.exists(model_path):
         os.makedirs(model_path)
     torch.save(model.state_dict(), os.path.join(model_path, 'model.pt'))
     with open(os.path.join(model_path, 'hyperparameters.json'), 'w') as f:
         json.dump(config, f, indent=4)
+    metrics = convert_metrics(metrics)
     with open(os.path.join(model_path, 'metrics.json'), 'w') as f:
         json.dump(metrics, f, indent=4)
+    if best_model:
+        best_model_path = os.path.join(model_path, 'best_model.pt')
+        torch.save(model.state_dict(), best_model_path)
 
 def calculate_inference_latency(model, dataloader, num_samples=100):
     model.eval()
@@ -131,79 +143,107 @@ def calculate_inference_latency(model, dataloader, num_samples=100):
     avg_latency = (end_time - start_time) / num_samples
     return avg_latency
 
+def generate_nn_configs():
+    depths = [2, 3, 4, 5]
+    hidden_layer_widths = [16, 32, 64, 128]
+    learning_rates = [0.01, 0.001]
+    optimisers = ['SGD', 'Adam']
+
+    configs = []
+    for depth, width, lr, opt in itertools.product(depths, hidden_layer_widths, learning_rates, optimisers):
+        config = {
+            'depth': depth,
+            'hidden_layer_width': width,
+            'optimiser': {
+                'name': opt,
+                'learning_rate': lr
+            }
+        }
+        configs.append(config)
+    return configs
+
+def find_best_nn(train_loader, val_loader, test_loader, epochs, writer):
+    best_rmse = float('inf')
+    best_model = None
+    best_config = None
+    best_metrics = None
+    configs = generate_nn_configs()
+
+    for config in configs:
+        input_dim = len(numerical_features)
+        model = AirbnbPriceModel(input_dim, config)
+        criterion = nn.MSELoss()
+        optimizer = getattr(optim, config['optimiser']['name'])(model.parameters(), lr=config['optimiser']['learning_rate'])
+
+        training_duration = train(model, train_loader, val_loader, epochs, criterion, optimizer, writer)
+
+        _, train_rmse, train_r2 = evaluate(model, train_loader, criterion)
+        _, val_rmse, val_r2 = evaluate(model, val_loader, criterion)
+        _, test_rmse, test_r2 = evaluate(model, test_loader, criterion)
+
+        inference_latency = calculate_inference_latency(model, test_loader)
+
+        metrics = {
+            'RMSE_loss': {
+                'train': train_rmse,
+                'validation': val_rmse,
+                'test': test_rmse
+            },
+            'R_squared': {
+                'train': train_r2,
+                'validation': val_r2,
+                'test': test_r2
+            },
+            'inference_latency': inference_latency,
+            'training_duration': training_duration
+        }
+
+        save_model(model, config, metrics, f"models/neural_network/{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}")
+
+        if val_rmse < best_rmse:
+            best_rmse = val_rmse
+            best_model = model
+            best_config = config
+            best_metrics = metrics
+
+    if best_model:
+        save_model(best_model, best_config, best_metrics, "models/best_model", best_model=True)
+
+    return best_model, best_metrics, best_config
+
 if __name__ == "__main__":
-    # Sample data
-    data = pd.read_csv("AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv")
-
-    # Create the dataset
-    dataset = AirbnbNightlyPriceRegressionDataset(data)
-
-    # Split the dataset into training (80%) and test (20%)
+    # Load your dataframe here
+    df = pd.read_csv("AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv")
+    
+    dataset = AirbnbNightlyPriceRegressionDataset(df)
+    
+    # Split the dataset into train and test sets
     train_size = int(0.8 * len(dataset))
     test_size = len(dataset) - train_size
     train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
 
-    # Create a new scaler and normalize the datasets again
-    scaler = dataset.scaler
-    train_dataset = AirbnbNightlyPriceRegressionDataset(train_dataset.dataset.dataframe.iloc[train_dataset.indices], scaler)
+    scaler = train_dataset.dataset.scaler
     test_dataset = AirbnbNightlyPriceRegressionDataset(test_dataset.dataset.dataframe.iloc[test_dataset.indices], scaler)
 
-    # Split the training dataset into training (80%) and validation (20%)
-    train_size = int(0.8 * len(train_dataset))
-    val_size = len(train_dataset) - train_size
+    # Further split the training dataset into training (80%) and validation (20%)
+    val_size = int(0.2 * len(train_dataset))
+    train_size = len(train_dataset) - val_size
     train_dataset, val_dataset = random_split(train_dataset, [train_size, val_size])
 
     # Create DataLoaders
-    train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=4, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=4, shuffle=True)
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
-    # Get model configuration
-    config = get_nn_config()
+    writer = SummaryWriter()
 
-    # Initialize model, criterion, optimizer
-    input_dim = len(numerical_features)
-    model = AirbnbPriceModel(input_dim, config)
-    criterion = nn.MSELoss()
-    optimizer = getattr(optim, config['optimiser']['name'])(model.parameters(), lr=config['optimiser']['learning_rate'])
+    best_model, best_metrics, best_config = find_best_nn(train_loader, val_loader, test_loader, epochs=5, writer=writer)
 
-    # Initialize TensorBoard writer
-    writer = SummaryWriter('runs/airbnb_price_regression')
-
-    # Train the model
-    training_duration = train(model, train_loader, val_loader, epochs=5, criterion=criterion, optimizer=optimizer, writer=writer)
-
-
-    # Evaluate model on training, validation, and test sets
-    _, train_rmse, train_r2 = evaluate(model, train_loader, criterion)
-    _, val_rmse, val_r2 = evaluate(model, val_loader, criterion)
-    _, test_rmse, test_r2 = evaluate(model, test_loader, criterion)
-
-    # Calculate inference latency
-    inference_latency = calculate_inference_latency(model, test_loader)
-
-    # Collect metrics
-    metrics = {
-        'RMSE_loss': {
-            'train': train_rmse,
-            'validation': val_rmse,
-            'test': test_rmse
-        },
-        'R_squared': {
-            'train': train_r2,
-            'validation': val_r2,
-            'test': test_r2
-        },
-        'training_duration': training_duration,
-        'inference_latency': inference_latency
-    }
-
-    # Save the model and hyperparameters
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    model_path = f"models/neural_networks/regression/{timestamp}"
-    save_model(model, config, metrics, model_path)
-
-    # Close the TensorBoard writer
     writer.close()
+
+    print("Best Model Config:", best_config)
+    print("Best Model Metrics:", best_metrics)
+
+
 
 

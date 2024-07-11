@@ -1,5 +1,10 @@
 import torch
-from torch.utils.data import Dataset, DataLoader, random_split
+import itertools
+import yaml
+import json
+import os
+import datetime
+import time
 import pandas as pd
 import numpy as np
 import torch.nn as nn
@@ -7,11 +12,8 @@ import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import root_mean_squared_error, r2_score
-import yaml
-import json
-import os
-import datetime
-import time
+from torch.utils.data import Dataset, DataLoader, random_split
+
 
 # Define numerical features and label
 numerical_features = ['guests', 'beds', 'bathrooms', 'Cleanliness_rating', 'Accuracy_rating',
@@ -121,7 +123,7 @@ def convert_to_native(obj):
     else:
         return obj
 
-def save_model(model, config, metrics, model_path):
+def save_model(model, config, metrics, model_path, best_model=False):
     if not os.path.exists(model_path):
         os.makedirs(model_path)
     torch.save(model.state_dict(), os.path.join(model_path, 'model.pt'))
@@ -132,6 +134,10 @@ def save_model(model, config, metrics, model_path):
 
     with open(os.path.join(model_path, 'metrics.json'), 'w') as f:
         json.dump(metrics, f, indent=4)
+
+    if best_model:
+        best_model_path = os.path.join(model_path, 'best_model.pt')
+        torch.save(model.state_dict(), best_model_path)
 
 def calculate_inference_latency(model, dataloader, num_samples=100):
     model.eval()
@@ -144,6 +150,76 @@ def calculate_inference_latency(model, dataloader, num_samples=100):
     end_time = time.time()
     avg_latency = (end_time - start_time) / num_samples
     return avg_latency
+
+def generate_nn_configs():
+    depths = [2, 3, 4, 5]
+    hidden_layer_widths = [16, 32, 64, 128]
+    learning_rates = [0.01, 0.001]
+    optimisers = ['SGD', 'Adam']
+
+    configs = []
+    for depth, width, lr, opt in itertools.product(depths, hidden_layer_widths, learning_rates, optimisers):
+        config = {
+            'depth': depth,
+            'hidden_layer_width': width,
+            'optimiser': {
+                'name': opt,
+                'learning_rate': lr
+            }
+        }
+        configs.append(config)
+    return configs
+
+def find_best_nn(train_loader, val_loader, test_loader, epochs, writer):
+    best_rmse = float('inf')
+    best_model = None
+    best_config = None
+    best_metrics = None
+    configs = generate_nn_configs()
+
+    for config in configs:
+        input_dim = len(numerical_features)
+        model = AirbnbPriceModel(input_dim, config)
+        criterion = nn.MSELoss()
+        optimizer = getattr(optim, config['optimiser']['name'])(model.parameters(), lr=config['optimiser']['learning_rate'])
+
+        training_duration = train(model, train_loader, val_loader, epochs, criterion, optimizer, writer)
+
+        _, train_rmse, train_r2 = evaluate(model, train_loader, criterion)
+        _, val_rmse, val_r2 = evaluate(model, val_loader, criterion)
+        _, test_rmse, test_r2 = evaluate(model, test_loader, criterion)
+
+        inference_latency = calculate_inference_latency(model, test_loader)
+
+        metrics = {
+            'RMSE_loss': {
+                'train': train_rmse,
+                'validation': val_rmse,
+                'test': test_rmse
+            },
+            'R_squared': {
+                'train': train_r2,
+                'validation': val_r2,
+                'test': test_r2
+            },
+            'training_duration': training_duration,
+            'inference_latency': inference_latency
+        }
+
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        model_path = f"models/neural_networks/regression/{timestamp}"
+        save_model(model, config, metrics, model_path)
+
+        if val_rmse < best_rmse:
+            best_rmse = val_rmse
+            best_model = model
+            best_config = config
+            best_metrics = metrics
+
+    best_model_path = "models/neural_networks/regression/best_model"
+    save_model(best_model, best_config, best_metrics, best_model_path, best_model=True)
+
+    return best_model, best_metrics, best_config
 
 if __name__ == "__main__":
     # Sample data
@@ -172,53 +248,15 @@ if __name__ == "__main__":
     val_loader = DataLoader(val_dataset, batch_size=4, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=4, shuffle=True)
 
-    # Get model configuration
-    config = get_nn_config()
 
-    # Initialize model, criterion, optimizer
-    input_dim = len(numerical_features)
-    model = AirbnbPriceModel(input_dim, config)
-    criterion = nn.MSELoss()
-    optimizer = getattr(optim, config['optimiser']['name'])(model.parameters(), lr=config['optimiser']['learning_rate'])
+    writer = SummaryWriter()
 
-    # Initialize TensorBoard writer
-    writer = SummaryWriter('runs/airbnb_price_regression')
+    best_model, best_metrics, best_config = find_best_nn(train_loader, val_loader, test_loader, epochs=5, writer=writer)
 
-    # Train the model
-    training_duration = train(model, train_loader, val_loader, epochs=5, criterion=criterion, optimizer=optimizer, writer=writer)
-
-
-    # Evaluate model on training, validation, and test sets
-    _, train_rmse, train_r2 = evaluate(model, train_loader, criterion)
-    _, val_rmse, val_r2 = evaluate(model, val_loader, criterion)
-    _, test_rmse, test_r2 = evaluate(model, test_loader, criterion)
-
-    # Calculate inference latency
-    inference_latency = calculate_inference_latency(model, test_loader)
-
-    # Collect metrics
-    metrics = {
-        'RMSE_loss': {
-            'train': train_rmse,
-            'validation': val_rmse,
-            'test': test_rmse
-        },
-        'R_squared': {
-            'train': train_r2,
-            'validation': val_r2,
-            'test': test_r2
-        },
-        'training_duration': training_duration,
-        'inference_latency': inference_latency
-    }
-
-    # Save the model and hyperparameters
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    model_path = f"models/neural_networks/regression/{timestamp}"
-    save_model(model, config, metrics, model_path)
-
-    # Close the TensorBoard writer
     writer.close()
+
+    print("Best Model Config:", best_config)
+    print("Best Model Metrics:", best_metrics)
 
 
 
