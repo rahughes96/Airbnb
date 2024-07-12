@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import torch.nn as nn
 import torch.optim as optim
+import torch.optim.lr_scheduler as lr_scheduler
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import root_mean_squared_error, r2_score
@@ -155,7 +156,7 @@ def evaluate(model, dataloader, criterion):
     r2 = r2_score(all_labels, all_outputs)
     return avg_val_loss, rmse, r2
 
-def train(model, train_loader, val_loader, epochs, criterion, optimizer, writer, grad_clip=1.0):
+def train(model, train_loader, val_loader, epochs, criterion, optimizer, writer, grad_clip=1.0, patience=5):
 
     """
     Trains the model for a specified number of epochs and logs the training and validation metrics.
@@ -175,6 +176,10 @@ def train(model, train_loader, val_loader, epochs, criterion, optimizer, writer,
     """
 
     start_time = time.time()
+    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=patience//2, factor=0.5)
+    best_val_loss = float('inf')
+    best_epoch = 0
+    
     for epoch in range(epochs):
         model.train()  # Set the model to training mode
         running_loss = 0.0
@@ -205,15 +210,27 @@ def train(model, train_loader, val_loader, epochs, criterion, optimizer, writer,
 
         avg_train_loss = running_loss / len(train_loader)
         val_loss, _, _ = evaluate(model, val_loader, criterion)
+        scheduler.step(val_loss)
 
         writer.add_scalar('Loss/Train', avg_train_loss, epoch)
         writer.add_scalar('Loss/Validation', val_loss, epoch)
 
         print(f"Epoch [{epoch+1}/{epochs}], Training Loss: {avg_train_loss:.4f}, Validation Loss: {val_loss:.4f}")
 
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            best_epoch = epoch
+            best_model_state = model.state_dict()
+
+        if epoch - best_epoch >= patience:
+            print("Early stopping triggered")
+            break
+
+    model.load_state_dict(best_model_state)
     end_time = time.time()
     training_duration = end_time - start_time
     return training_duration
+
 
 def save_model(model, config, metrics, model_path, best_model=False):
 
@@ -291,11 +308,11 @@ def generate_nn_configs():
         list: A list of dictionaries, each containing a unique set of hyperparameters for the model.
     """
 
-    depths = [2]  # Fixed at 2 layers for fine-tuning
-    hidden_layer_widths = [128]  # Fixed at 128 units for fine-tuning
-    learning_rates = [0.01, 0.001, 0.0001]  # Different learning rates to try
-    dropout_probs = [0.0, 0.1, 0.2]  # Different dropout probabilities to try
-    weight_decays = [0.0, 0.0001, 0.001]  # Different weight decays to try
+    depths = [2, 3]  # Fixed at 2 layers for fine-tuning
+    hidden_layer_widths = [256]  # Fixed at 128 units for fine-tuning
+    learning_rates = [0.003, 0.005, 0.007]  # Different learning rates to try
+    dropout_probs = [0.2]  # Different dropout probabilities to try
+    weight_decays = [0.001]  # Different weight decays to try
     optimisers = ['Adam']  # Fixed optimiser for fine-tuning
     
     configs = []
@@ -398,5 +415,3 @@ if __name__ == "__main__":
 
     print("Best Model Config:", best_config)
     print("Best Model Metrics:", best_metrics)
-
-
