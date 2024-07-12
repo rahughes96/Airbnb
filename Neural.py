@@ -20,7 +20,20 @@ numerical_features = ['guests', 'beds', 'bathrooms', 'Cleanliness_rating', 'Accu
 label = 'Price_Night'
 
 class AirbnbNightlyPriceRegressionDataset(Dataset):
+
     def __init__(self, dataframe, scaler=None):
+        """
+        Initializes the AirbnbNightlyPriceRegressionDataset class by loading and normalizing features
+        and labels from the provided dataframe.
+
+        Parameters:
+            dataframe (pd.DataFrame): DataFrame containing the dataset.
+            scaler (StandardScaler, optional): StandardScaler object for feature normalization. If None, a new scaler is created.
+
+        Returns:
+            None
+        """
+
         self.dataframe = dataframe
         self.features = dataframe[numerical_features].astype(float).values
         self.labels = dataframe[label].values.astype(float)
@@ -34,15 +47,49 @@ class AirbnbNightlyPriceRegressionDataset(Dataset):
             self.features = self.scaler.transform(self.features)
 
     def __len__(self):
+
+        """
+        Returns the length of the dataset.
+
+        Parameters:
+            None
+
+        Returns:
+            int: The number of samples in the dataset.
+        """
         return len(self.dataframe)
 
     def __getitem__(self, idx):
+
+        """
+        Retrieves a single sample from the dataset.
+
+        Parameters:
+            idx (int): The index of the sample to retrieve.
+
+        Returns:
+            tuple: A tuple containing the features and label of the sample at the specified index.
+        """
+
         features = torch.tensor(self.features[idx], dtype=torch.float32)
         label = torch.tensor(self.labels[idx], dtype=torch.float32)
         return features, label
 
 class AirbnbPriceModel(nn.Module):
     def __init__(self, input_dim, config, dropout_prob):
+
+        """
+        Initializes the AirbnbPriceModel class by creating the neural network layers.
+
+        Parameters:
+            input_dim (int): The number of input features.
+            config (dict): Configuration dictionary containing hidden_layer_width, depth, and dropout_prob.
+            dropout_prob (float): Dropout probability.
+
+        Returns:
+            None
+        """
+
         super(AirbnbPriceModel, self).__init__()
         hidden_layer_width = config['hidden_layer_width']
         depth = config['depth']
@@ -62,10 +109,34 @@ class AirbnbPriceModel(nn.Module):
         self.model = nn.Sequential(*layers)
 
     def forward(self, x):
+
+        """
+        Defines the forward pass of the model.
+
+        Parameters:
+            x (torch.Tensor): Input tensor containing the features.
+
+        Returns:
+            torch.Tensor: Output tensor containing the predicted values.
+        """
+
         return self.model(x)
 
 
 def evaluate(model, dataloader, criterion):
+
+    """
+    Evaluates the model on the provided dataloader using the specified loss criterion.
+
+    Parameters:
+        model (nn.Module): The neural network model to evaluate.
+        dataloader (DataLoader): DataLoader object providing the dataset.
+        criterion (nn.Module): Loss function to use for evaluation.
+
+    Returns:
+        tuple: A tuple containing the average validation loss, root mean squared error, and R-squared score.
+    """
+
     model.eval()  # Set the model to evaluation mode
     val_loss = 0.0
     all_labels = []
@@ -85,6 +156,24 @@ def evaluate(model, dataloader, criterion):
     return avg_val_loss, rmse, r2
 
 def train(model, train_loader, val_loader, epochs, criterion, optimizer, writer, grad_clip=1.0):
+
+    """
+    Trains the model for a specified number of epochs and logs the training and validation metrics.
+
+    Parameters:
+        model (nn.Module): The neural network model to train.
+        train_loader (DataLoader): DataLoader object providing the training dataset.
+        val_loader (DataLoader): DataLoader object providing the validation dataset.
+        epochs (int): The number of epochs to train for.
+        criterion (nn.Module): Loss function to use for training.
+        optimizer (torch.optim.Optimizer): Optimizer to use for updating model parameters.
+        writer (SummaryWriter): SummaryWriter object for logging metrics.
+        grad_clip (float, optional): Gradient clipping value. Defaults to 1.0.
+
+    Returns:
+        float: The total duration of the training process.
+    """
+
     start_time = time.time()
     for epoch in range(epochs):
         model.train()  # Set the model to training mode
@@ -127,6 +216,21 @@ def train(model, train_loader, val_loader, epochs, criterion, optimizer, writer,
     return training_duration
 
 def save_model(model, config, metrics, model_path, best_model=False):
+
+    """
+    Saves the model's state dictionary, hyperparameters, and performance metrics to the specified directory.
+
+    Parameters:
+        model (nn.Module): The neural network model to save.
+        config (dict): Configuration dictionary containing model hyperparameters.
+        metrics (dict): Dictionary containing performance metrics.
+        model_path (str): Directory path to save the model.
+        best_model (bool, optional): Whether to save the model as the best model. Defaults to False.
+
+    Returns:
+        None
+    """
+
     if not os.path.exists(model_path):
         os.makedirs(model_path)
     torch.save(model.state_dict(), os.path.join(model_path, 'model.pt'))
@@ -151,6 +255,19 @@ def save_model(model, config, metrics, model_path, best_model=False):
         torch.save(model.state_dict(), best_model_path)
 
 def calculate_inference_latency(model, dataloader, num_samples=100):
+
+    """
+    Calculates the average inference latency of the model on the provided dataloader.
+
+    Parameters:
+        model (nn.Module): The neural network model to evaluate.
+        dataloader (DataLoader): DataLoader object providing the dataset.
+        num_samples (int, optional): Number of samples to use for latency calculation. Defaults to 100.
+
+    Returns:
+        float: The average inference latency per sample.
+    """
+
     model.eval()
     start_time = time.time()
     with torch.no_grad():
@@ -163,6 +280,17 @@ def calculate_inference_latency(model, dataloader, num_samples=100):
     return avg_latency
 
 def generate_nn_configs():
+
+    """
+    Generates a list of neural network configurations to try during model training.
+
+    Parameters:
+        None
+
+    Returns:
+        list: A list of dictionaries, each containing a unique set of hyperparameters for the model.
+    """
+
     depths = [2]  # Fixed at 2 layers for fine-tuning
     hidden_layer_widths = [128]  # Fixed at 128 units for fine-tuning
     learning_rates = [0.01, 0.001, 0.0001]  # Different learning rates to try
@@ -188,6 +316,21 @@ def generate_nn_configs():
 
 
 def find_best_nn(train_loader, val_loader, test_loader, epochs, writer):
+
+    """
+    Finds the best neural network configuration by training and evaluating models with different configurations.
+
+    Parameters:
+        train_loader (DataLoader): DataLoader object providing the training dataset.
+        val_loader (DataLoader): DataLoader object providing the validation dataset.
+        test_loader (DataLoader): DataLoader object providing the test dataset.
+        epochs (int): The number of epochs to train each model.
+        writer (SummaryWriter): SummaryWriter object for logging metrics.
+
+    Returns:
+        tuple: A tuple containing the best model, best metrics, and best configuration.
+    """
+
     best_rmse = float('inf')
     best_model = None
     best_config = None
