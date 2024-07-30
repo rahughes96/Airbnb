@@ -8,7 +8,7 @@ import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import root_mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score
 import yaml
 import json
 import os
@@ -56,7 +56,8 @@ class AirbnbNightlyPriceRegressionDataset(Dataset):
             None
 
         Returns:
-            int: The number of samples in the dataset.
+            int: The number of samples in the dataset
+            
         """
         return len(self.dataframe)
 
@@ -152,11 +153,11 @@ def evaluate(model, dataloader, criterion):
     avg_val_loss = val_loss / len(dataloader)
     all_labels = np.concatenate(all_labels)
     all_outputs = np.concatenate(all_outputs)
-    rmse = root_mean_squared_error(all_labels, all_outputs)
+    rmse = np.sqrt(mean_squared_error(all_labels, all_outputs))
     r2 = r2_score(all_labels, all_outputs)
     return avg_val_loss, rmse, r2
 
-def train(model, train_loader, val_loader, epochs, criterion, optimizer, writer, grad_clip=1.0, patience=5):
+def train(model, train_loader, val_loader, epochs, criterion, optimizer, writer, grad_clip=1.0, patience=12):
 
     """
     Trains the model for a specified number of epochs and logs the training and validation metrics.
@@ -391,8 +392,52 @@ def find_best_nn(train_loader, val_loader, test_loader, epochs, writer):
             best_config = config
             best_metrics = metrics
 
-    save_model(best_model, best_config, best_metrics, 'models/neural_network/best_model', best_model=True)
+    #save_model(best_model, best_config, best_metrics, 'models/neural_network/best_model', best_model=True)
     return best_model, best_metrics, best_config
+
+def find_best_overall_model(base_path, save_path='models/neural_network/best_model'):
+    # Initialize variables to track the best RMSE validation loss and corresponding run
+    best_rmse = float('inf')
+    best_test_rmse = float('inf')
+    best_run = None
+    best_metrics = None
+    best_config = None
+    best_model_state = None
+    
+    # Traverse the base directory
+    for run_dir in os.listdir(base_path):
+        run_path = os.path.join(base_path, run_dir)
+        metrics_path = os.path.join(run_path, 'metrics.json')
+        config_path = os.path.join(run_path, 'hyperparameters.json')
+        model_path = os.path.join(run_path, 'model.pt')
+        
+        if os.path.isdir(run_path) and os.path.isfile(metrics_path):
+            with open(metrics_path, 'r') as f:
+                metrics = json.load(f)
+                
+            if os.path.isfile(config_path):
+                with open(config_path, 'r') as g:
+                    config = json.load(g)
+                
+                # Extract the RMSE validation loss
+                rmse_validation = metrics.get('RMSE_loss', {}).get('validation', float('inf'))
+                rmse_test = metrics.get('RMSE_loss', {}).get('test', float('inf'))
+                
+                # Update the best RMSE validation loss and corresponding run if necessary
+                if rmse_validation < best_rmse or (rmse_validation == best_rmse and rmse_test < best_test_rmse):
+                    best_rmse = rmse_validation
+                    best_test_rmse = rmse_test
+                    best_run = run_dir
+                    best_metrics = metrics
+                    best_config = config
+                    best_model_state = torch.load(model_path)
+    
+    # Save the best model and its corresponding files
+    if best_run:
+        save_model(best_model_state, best_config, best_metrics, save_path, best_model=True)
+        print(f"The best model is from run: {best_run} with validation RMSE: {best_rmse}")
+    else:
+        print("No valid models found.")
 
 if __name__ == "__main__":
     data = pd.read_csv('AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv')
@@ -409,9 +454,11 @@ if __name__ == "__main__":
 
     writer = SummaryWriter()
 
-    best_model, best_metrics, best_config = find_best_nn(train_loader, val_loader, test_loader, epochs=5, writer=writer)
+    best_model, best_metrics, best_config = find_best_nn(train_loader, val_loader, test_loader, epochs=50, writer=writer)
 
     writer.close()
-
+    print("For this run")
     print("Best Model Config:", best_config)
     print("Best Model Metrics:", best_metrics)
+
+    find_best_overall_model('models/neural_network')

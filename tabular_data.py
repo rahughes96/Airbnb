@@ -83,6 +83,7 @@ def clean_tabular_data(dataframe):
     dataframe = remove_rows_with_missing_ratings(dataframe)
     dataframe = clean_description_strings(dataframe)
     dataframe = dataframe.loc[:, ~dataframe.columns.str.contains('^Unnamed')]
+    dataframe = dataframe[dataframe['guests']!="Somerford Keynes England United Kingdom"]
     return dataframe
 
 def load_airbnb_regression(dataframe,label=None):
@@ -138,9 +139,9 @@ def load_data_classification(filepath):
 
 if __name__ == "__main__":
     print("Loading data...")
-    Airbnb_data = pd.read_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/tabular_data/listing.csv')
+    Airbnb_data = pd.read_csv(r"C:/Users/RyanHughes/Kigen/Airbnb/AirbnbData/Raw_Data/tabular_data/listing.csv")
     print("Cleaning...")
     cleaned_airbnb_data = clean_tabular_data(Airbnb_data)
-    cleaned_airbnb_data.to_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv')
+    cleaned_airbnb_data.to_csv(r'C:/Users/RyanHughes/Kigen/Airbnb/AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv')
 
     print("done")

@@ -168,14 +168,12 @@ class AirbnbLogisticRegression:
         print("Accuracy:", test_accuracy)
         print("Precision:", test_precision)
         print("Recall:", test_recall)
-        print("F1 Score:", test_f1_score)     
-    
-    def tune_classification_model_hyperparameters(self, model_class, xtrain, ytrain, xvalid, yvalid, param_grid):
+        print("F1 Score:", test_f1_score)
+
+    def tune_classification_model_hyperparameters(self, model_class, xtrain, ytrain, xvalid, yvalid, xtest, ytest, param_grid):
 
         """
-
         Tunes hyperparameters for a classification model using grid search with cross-validation.
-
         The best model, its hyperparameters, and performance metrics on the validation set 
         are stored in the instance and returned.
 
@@ -185,10 +183,11 @@ class AirbnbLogisticRegression:
             ytrain (pd.Series or np.ndarray): The training target data.
             xvalid (pd.DataFrame or np.ndarray): The validation feature data.
             yvalid (pd.Series or np.ndarray): The validation target data.
+            xtest (pd.DataFrame or np.ndarray): The test feature data.
+            ytest (pd.Series or np.ndarray): The test target data.
             param_grid (dict): The hyperparameter grid to search over.
-
         """
-
+        
         grid_search = GridSearchCV(
             estimator=model_class(),
             param_grid=param_grid,
@@ -203,24 +202,52 @@ class AirbnbLogisticRegression:
         self.best_hyperparameters = grid_search.best_params_
         
         # Evaluate performance on validation set
+        ypred_train = grid_search.predict(xtrain)
         ypred_valid = grid_search.predict(xvalid)
-        validation_accuracy = accuracy_score(yvalid, ypred_valid)
-        self.metrics["validation_accuracy"] = validation_accuracy
+        ypred_test = grid_search.predict(xtest)
 
-        # Additional performance metrics
-        precision = precision_score(yvalid, ypred_valid, average='macro')
-        recall = recall_score(yvalid, ypred_valid, average='macro')
-        f1 = f1_score(yvalid, ypred_valid, average='macro')
+        train_accuracy = accuracy_score(ytrain, ypred_train)
+        validation_accuracy = accuracy_score(yvalid, ypred_valid)
+        test_accuracy = accuracy_score(ytest, ypred_test)
+        
+        train_precision = precision_score(ytrain, ypred_train, average='macro')
+        validation_precision = precision_score(yvalid, ypred_valid, average='macro')
+        test_precision = precision_score(ytest, ypred_test, average='macro')
+        
+        train_recall = recall_score(ytrain, ypred_train, average='macro')
+        validation_recall = recall_score(yvalid, ypred_valid, average='macro')
+        test_recall = recall_score(ytest, ypred_test, average='macro')
+        
+        train_f1 = f1_score(ytrain, ypred_train, average='macro')
+        validation_f1 = f1_score(yvalid, ypred_valid, average='macro')
+        test_f1 = f1_score(ytest, ypred_test, average='macro')
 
         performance_metrics = {
-            "validation_accuracy": validation_accuracy,
-            "precision": precision,
-            "recall": recall,
-            "f1_score": f1
+            "accuracy": {
+                "train": train_accuracy,
+                "validation": validation_accuracy,
+                "test": test_accuracy
+            },
+            "precision": {
+                "train": train_precision,
+                "validation": validation_precision,
+                "test": test_precision
+            },
+            "recall": {
+                "train": train_recall,
+                "validation": validation_recall,
+                "test": test_recall
+            },
+            "f1_score": {
+                "train": train_f1,
+                "validation": validation_f1,
+                "test": test_f1
+            }
         }
 
         print(performance_metrics)
-        return self.best_model, self.best_hyperparameters, performance_metrics
+        return self.best_model, self.best_hyperparameters, performance_metrics  
+    
     
     def compute_learning_curves(self, model, train_sizes):
 
@@ -348,6 +375,8 @@ class AirbnbLogisticRegression:
             ytrain=self.train_split['ytrain'],
             xvalid=self.train_split['xvalid'],
             yvalid=self.train_split['yvalid'],
+            xtest=self.train_split['xtest'],
+            ytest=self.train_split['ytest'],
             param_grid=log_hyperparameters
         )
 
@@ -373,6 +402,8 @@ class AirbnbLogisticRegression:
             ytrain=self.train_split['ytrain'],
             xvalid=self.train_split['xvalid'],
             yvalid=self.train_split['yvalid'],
+            xtest=self.train_split['xtest'],
+            ytest=self.train_split['ytest'],
             param_grid=dt_hyperparameters
         )
 
@@ -399,6 +430,8 @@ class AirbnbLogisticRegression:
             ytrain=self.train_split['ytrain'],
             xvalid=self.train_split['xvalid'],
             yvalid=self.train_split['yvalid'],
+            xtest=self.train_split['xtest'],
+            ytest=self.train_split['ytest'],
             param_grid=rf_hyperparameters
         )
 
@@ -426,6 +459,8 @@ class AirbnbLogisticRegression:
             ytrain=self.train_split['ytrain'],
             xvalid=self.train_split['xvalid'],
             yvalid=self.train_split['yvalid'],
+            xtest=self.train_split['xtest'],
+            ytest=self.train_split['ytest'],
             param_grid=gb_hyperparameters
         )
 
@@ -479,7 +514,7 @@ class AirbnbLogisticRegression:
                 performance_metrics = json.load(metrics_file)
 
             # Check performance metric
-            validation_accuracy = performance_metrics['validation_accuracy']
+            validation_accuracy = performance_metrics["accuracy"]["validation"]
 
             # Check if the current model has a lower RMSE
             if validation_accuracy > best_validation_accuracy:
