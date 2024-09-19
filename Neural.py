@@ -156,7 +156,7 @@ def evaluate(model, dataloader, criterion):
     r2 = r2_score(all_labels, all_outputs)
     return avg_val_loss, rmse, r2
 
-def train(model, train_loader, val_loader, epochs, criterion, optimizer, writer, grad_clip=1.0, patience=5):
+def train(model, train_loader, val_loader, epochs, criterion, optimizer, writer, grad_clip=1.0, patience=20):
 
     """
     Trains the model for a specified number of epochs and logs the training and validation metrics.
@@ -409,7 +409,7 @@ if __name__ == "__main__":
 
     writer = SummaryWriter()
 
-    best_model, best_metrics, best_config = find_best_nn(train_loader, val_loader, test_loader, epochs=5, writer=writer)
+    best_model, best_metrics, best_config = find_best_nn(train_loader, val_loader, test_loader, epochs=200, writer=writer)
 
     writer.close()
 

@@ -67,6 +67,13 @@ def set_default_feature_values(dataframe):
     dataframe[columns] = dataframe[columns].fillna(1)
     return dataframe
 
+def map_Bedrooms(data):
+    unique_bedrooms = sorted(data['bedrooms'].unique())
+    bedroom_mapping = {bedroom: idx for idx, bedroom in enumerate(unique_bedrooms)}
+
+    # Apply the mapping
+    data['bedrooms_mapped'] = data['bedrooms'].map(bedroom_mapping)
+
 def clean_tabular_data(dataframe):
 
     """
@@ -78,10 +85,9 @@ def clean_tabular_data(dataframe):
         Dataframe (df): The raw dataframe of the listings file 
     
     """
-
     dataframe = set_default_feature_values(dataframe)
     dataframe = remove_rows_with_missing_ratings(dataframe)
-    dataframe = clean_description_strings(dataframe)
+    dataframe = clean_description_strings(dataframe)   
     dataframe = dataframe.loc[:, ~dataframe.columns.str.contains('^Unnamed')]
     return dataframe
 
@@ -136,10 +142,12 @@ def load_data_classification(filepath):
     dataframe[['Cleanliness_rating','Accuracy_rating','Communication_rating','Location_rating','Value_rating']].dropna(axis=1, inplace=True)
     return dataframe
 
+
 if __name__ == "__main__":
     print("Loading data...")
     Airbnb_data = pd.read_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Raw_Data/tabular_data/listing.csv')
     print("Cleaning...")
+    Airbnb_data = Airbnb_data[Airbnb_data['guests']!= 'Somerford Keynes England United Kingdom']
     cleaned_airbnb_data = clean_tabular_data(Airbnb_data)
     cleaned_airbnb_data.to_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv')
 

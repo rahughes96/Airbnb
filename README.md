@@ -153,3 +153,9 @@ Within the if __name__ == "__main__" block, we can now call evaluate_all_models 
 <img width="1090" alt="Screenshot 2024-06-12 at 21 50 56" src="https://github.com/rahughes96/Airbnb/assets/102994234/96d93fce-cfc5-41ab-8c9f-d7189918cc35">
 
 <img width="1000" alt="Screenshot 2024-06-11 at 22 11 49" src="https://github.com/rahughes96/Airbnb/assets/102994234/dba9018b-f06f-4663-acd3-8b0084567dcd">
+
+nn.MSE becomes nn.entropy for classification
+
+Architecture = unique values in your label, line 109
+
+new file called pipeline, imports neural, class, reg
