@@ -495,7 +495,7 @@ class AirbnbLogisticRegression:
         return best_model, best_hyperparameters, best_performance_metrics
     
 if __name__ == "__main__":
-    filepath = 'AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv'
+    filepath = 'AirbnbData/Processed_Data/clean_tabular_data.csv'
 
     airbnb_lr = AirbnbLogisticRegression()
     airbnb_lr.evaluate_all_models(path=filepath)

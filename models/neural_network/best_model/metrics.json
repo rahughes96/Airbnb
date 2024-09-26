@@ -1,8 +1,14 @@
 {
-    "Accuracy": {
-        "train": 0.8982758620689655,
-        "validation": 0.8306451612903226,
-        "test": 0.712
+    "RMSE_loss": {
+        "train": 91.56316375732422,
+        "validation": 98.35447692871094,
+        "test": 93.66213989257812
     },
-    "training_duration": 0.3851001262664795
+    "R_squared": {
+        "train": 0.5506905317306519,
+        "validation": -0.061501145362854004,
+        "test": 0.39392977952957153
+    },
+    "inference_latency": 8.130073547363282e-06,
+    "training_duration": 15.310847043991089
 }

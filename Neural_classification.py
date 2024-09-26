@@ -308,7 +308,7 @@ def generate_nn_configs():
     return configs[:16]  # Select the first 16 configurations
 
 
-def find_best_nn(train_loader, val_loader, test_loader, epochs, writer):
+def find_best_classification_nn(train_loader, val_loader, test_loader, epochs, writer):
     """
     Finds the best neural network model configuration by training on the dataset.
     
@@ -380,7 +380,7 @@ if __name__ == "__main__":
 
     writer = SummaryWriter()
 
-    best_model, best_metrics, best_config = find_best_nn(train_loader, val_loader, test_loader, epochs=200, writer=writer)
+    best_model, best_metrics, best_config = find_best_classification_nn(train_loader, val_loader, test_loader, epochs=200, writer=writer)
 
     writer.close()
 

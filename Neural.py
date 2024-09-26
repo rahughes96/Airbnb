@@ -395,7 +395,7 @@ def find_best_nn(train_loader, val_loader, test_loader, epochs, writer):
     return best_model, best_metrics, best_config
 
 if __name__ == "__main__":
-    data = pd.read_csv('AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv')
+    data = pd.read_csv('AirbnbData/Processed_Data/clean_tabular_data.csv')
     dataset = AirbnbNightlyPriceRegressionDataset(data)
     train_size = int(0.7 * len(dataset))
     val_size = int(0.15 * len(dataset))
