@@ -215,7 +215,7 @@ def train(model, train_loader, val_loader, epochs, criterion, optimizer, writer,
         writer.add_scalar('Loss/Train', avg_train_loss, epoch)
         writer.add_scalar('Loss/Validation', val_loss, epoch)
 
-        print(f"Epoch [{epoch+1}/{epochs}], Training Loss: {avg_train_loss:.4f}, Validation Loss: {val_loss:.4f}")
+        #print(f"Epoch [{epoch+1}/{epochs}], Training Loss: {avg_train_loss:.4f}, Validation Loss: {val_loss:.4f}")
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
@@ -223,7 +223,7 @@ def train(model, train_loader, val_loader, epochs, criterion, optimizer, writer,
             best_model_state = model.state_dict()
 
         if epoch - best_epoch >= patience:
-            print("Early stopping triggered")
+            print(f"Early stopping at epoch {epoch}")
             break
 
     model.load_state_dict(best_model_state)

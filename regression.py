@@ -280,7 +280,7 @@ class MGS():
         """
 
             # Load and clean the data
-        print("Load and clean the data")
+        #print("Load and clean the data")
         airbnb_data = pd.read_csv(path)
         cleaned_airbnb_data = clean_tabular_data(airbnb_data).dropna()
         #cleaned_airbnb_data.to_csv('AirbnbData/Raw_Data/tabular_data/listing.csv')
@@ -288,7 +288,7 @@ class MGS():
         (X, y) = load_airbnb_regression(cleaned_airbnb_data, label)
 
         # Train-test split
-        print("Train-test split")
+        #print("Train-test split")
         X = scale(X)
         y = scale(y)
         xtrain, xtest, ytrain, ytest = model_selection.train_test_split(X, y, test_size=0.3)

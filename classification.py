@@ -219,7 +219,7 @@ class AirbnbLogisticRegression:
             "f1_score": f1
         }
 
-        print(performance_metrics)
+        #print(performance_metrics)
         return self.best_model, self.best_hyperparameters, performance_metrics
     
     def compute_learning_curves(self, model, train_sizes):

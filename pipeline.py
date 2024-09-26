@@ -15,16 +15,15 @@ if __name__ == "__main__":
     Airbnb_data = Airbnb_data[Airbnb_data['guests']!= 'Somerford Keynes England United Kingdom']
     cleaned_airbnb_data = clean_tabular_data(Airbnb_data)
     cleaned_airbnb_data.to_csv(clean_data_path)
-    """"
+    
     #Regression
     print("REGRESSION")
     mgs = MGS()
 
-    print("Evaluating all Regression Models")
     mgs.evaluate_all_models(clean_data_path, 'Price_Night', plot=True)
 
     best_model, best_hyperparameters, best_performance_metrics = mgs.find_best_model("models/regression/")
-
+    
     #Classification
     print("CLASSIFICATION")
     airbnb_lr = AirbnbLogisticRegression()
@@ -32,7 +31,7 @@ if __name__ == "__main__":
     best_model, best_hyperparameters, best_performance_metrics = airbnb_lr.find_best_model("models/classification/")
     
     #Neural
-    print("NEURAL")
+    print("NEURAL NETWORK")
     data = pd.read_csv('AirbnbData/Processed_Data/clean_tabular_data.csv')
     dataset = AirbnbNightlyPriceRegressionDataset(data)
     train_size = int(0.7 * len(dataset))
@@ -53,7 +52,7 @@ if __name__ == "__main__":
 
     print("Best Model Config:", best_config)
     print("Best Model Metrics:", best_metrics)
-    """
+    
     #Neural classification
     print("NEURAL CLASSIFICATION")
     #data = pd.read_csv('AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv')

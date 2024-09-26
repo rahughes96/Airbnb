@@ -3,5 +3,5 @@
     "eta0": 0.05,
     "learning_rate": "constant",
     "max_iter": 5000,
-    "penalty": "elasticnet"
+    "penalty": "l1"
 }

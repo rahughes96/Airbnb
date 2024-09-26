@@ -139,7 +139,7 @@ def load_data_classification(filepath):
         dataframe[column] = dataframe[column].astype(int)
 
 
-    dataframe[['Cleanliness_rating','Accuracy_rating','Communication_rating','Location_rating','Value_rating']].dropna(axis=1, inplace=True)
+    dataframe[['Cleanliness_rating','Accuracy_rating','Communication_rating','Location_rating','Value_rating']] = dataframe[['Cleanliness_rating','Accuracy_rating','Communication_rating','Location_rating','Value_rating']].dropna(axis=1)
     return dataframe
 
 
