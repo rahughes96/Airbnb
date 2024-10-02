@@ -137,25 +137,19 @@ class AirbnbLogisticRegression:
         The metrics are computed for both the training and test sets and printed to the console.
         """
 
-        # Predictions on training set
         train_predictions = self.model.predict(self.train_split["xtrain"])
-        # Predictions on test set
         test_predictions = self.model.predict(self.train_split["xtest"])
-        # Compute accuracy for training set
-        train_accuracy = accuracy_score(self.train_split["ytrain"], train_predictions)
-        # Compute accuracy for test set
+
+        train_accuracy = accuracy_score(self.train_split["ytrain"], train_predictions) 
         test_accuracy = accuracy_score(self.train_split["ytest"], test_predictions)
-        # Compute precision for training set
+
         train_precision = precision_score(self.train_split["ytrain"], train_predictions, average='weighted')
-        # Compute precision for test set
         test_precision = precision_score(self.train_split["ytest"], test_predictions, average='weighted')
-        # Compute recall for training set
+
         train_recall = recall_score(self.train_split["ytrain"], train_predictions, average='weighted')
-        # Compute recall for test set
         test_recall = recall_score(self.train_split["ytest"], test_predictions, average='weighted')
-        # Compute F1 score for training set
+
         train_f1_score = f1_score(self.train_split["ytrain"], train_predictions, average='weighted')
-        # Compute F1 score for test set
         test_f1_score = f1_score(self.train_split["ytest"], test_predictions, average='weighted')
         
         # Print the performance measures
@@ -170,7 +164,7 @@ class AirbnbLogisticRegression:
         print("Recall:", test_recall)
         print("F1 Score:", test_f1_score)     
     
-    def tune_classification_model_hyperparameters(self, model_class, xtrain, ytrain, xvalid, yvalid, param_grid):
+    def tune_classification_model_hyperparameters(self, model_class, xtrain, ytrain, xvalid, yvalid, xtest, ytest, param_grid):
 
         """
 
@@ -204,19 +198,47 @@ class AirbnbLogisticRegression:
         
         # Evaluate performance on validation set
         ypred_valid = grid_search.predict(xvalid)
-        validation_accuracy = accuracy_score(yvalid, ypred_valid)
-        self.metrics["validation_accuracy"] = validation_accuracy
+        ypred_test = grid_search.predict(xtest)
+        ypred_train = grid_search.predict(xtrain)
+        val_accuracy = accuracy_score(yvalid, ypred_valid)
+        self.metrics["validation_accuracy"] = val_accuracy
 
         # Additional performance metrics
-        precision = precision_score(yvalid, ypred_valid, average='macro')
-        recall = recall_score(yvalid, ypred_valid, average='macro')
-        f1 = f1_score(yvalid, ypred_valid, average='macro')
+
+        train_accuracy = accuracy_score(ytrain, ypred_train)
+        train_precision = precision_score(ytrain, ypred_train, average='macro')
+        train_recall = recall_score(ytest, ypred_train, average='macro')
+        train_f1 = f1_score(ytest, ypred_train, average='macro')
+
+        val_precision = precision_score(yvalid, ypred_valid, average='macro')
+        val_recall = recall_score(yvalid, ypred_valid, average='macro')
+        val_f1 = f1_score(yvalid, ypred_valid, average='macro')
+
+        test_accuracy = accuracy_score(ytest, ypred_test)
+        test_precision = precision_score(ytest, ypred_test, average='macro')
+        test_recall = recall_score(ytest, ypred_test, average='macro')
+        test_f1 = f1_score(ytest, ypred_test, average='macro')
+
 
         performance_metrics = {
-            "validation_accuracy": validation_accuracy,
-            "precision": precision,
-            "recall": recall,
-            "f1_score": f1
+            'Train' :{
+                'accuracy': train_accuracy,
+                'precision':train_precision,
+                'recall':train_recall,
+                'f1':train_f1,
+            },
+            'Validation': {
+                "accuracy": val_accuracy,
+                "precision": val_precision,
+                "recall": val_recall,
+                "f1_score": val_f1
+            },
+            'Test': {
+                'accuracy': test_accuracy,
+                'precision': test_precision,
+                'recall': test_recall,
+                'f1': test_f1
+            }
         }
 
         #print(performance_metrics)
@@ -348,6 +370,8 @@ class AirbnbLogisticRegression:
             ytrain=self.train_split['ytrain'],
             xvalid=self.train_split['xvalid'],
             yvalid=self.train_split['yvalid'],
+            xtest = self.train_split['xtest'],
+            ytest = self.train_split['ytest'],
             param_grid=log_hyperparameters
         )
 
@@ -373,6 +397,8 @@ class AirbnbLogisticRegression:
             ytrain=self.train_split['ytrain'],
             xvalid=self.train_split['xvalid'],
             yvalid=self.train_split['yvalid'],
+            xtest = self.train_split['xtest'],
+            ytest = self.train_split['ytest'],
             param_grid=dt_hyperparameters
         )
 
@@ -399,6 +425,8 @@ class AirbnbLogisticRegression:
             ytrain=self.train_split['ytrain'],
             xvalid=self.train_split['xvalid'],
             yvalid=self.train_split['yvalid'],
+            xtest = self.train_split['xtest'],
+            ytest = self.train_split['ytest'],
             param_grid=rf_hyperparameters
         )
 
@@ -426,6 +454,8 @@ class AirbnbLogisticRegression:
             ytrain=self.train_split['ytrain'],
             xvalid=self.train_split['xvalid'],
             yvalid=self.train_split['yvalid'],
+            xtest = self.train_split['xtest'],
+            ytest = self.train_split['ytest'],
             param_grid=gb_hyperparameters
         )
 

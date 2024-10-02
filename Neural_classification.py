@@ -9,7 +9,7 @@ import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import root_mean_squared_error, r2_score
+from sklearn.metrics import root_mean_squared_error, r2_score, accuracy_score, f1_score, recall_score, precision_score
 import yaml
 import json
 import os
@@ -133,6 +133,9 @@ def evaluate(model, dataloader, criterion):
     val_loss = 0.0
     correct = 0
     total = 0
+    accuracy_list = []
+    all_predictions = []
+    all_labels = []
     with torch.no_grad():
         for features, labels in dataloader:
             outputs = model(features)
@@ -142,11 +145,31 @@ def evaluate(model, dataloader, criterion):
             # Get predictions and compare with labels
             _, predicted = torch.max(outputs, 1)
             correct += (predicted == labels).sum().item()
-            total += labels.size(0)
+            total += labels.size(0) 
+
+            alternate_accuracy = accuracy_score(labels, predicted)
+            accuracy_list.append(alternate_accuracy)
+            #from sklearn.metrics import accuracy_score
+
+            #accuracy_score(labels,prediction)
+            all_labels.extend(labels.cpu().numpy())
+            all_predictions.extend(predicted.cpu().numpy())
     
     avg_val_loss = val_loss / len(dataloader)
-    accuracy = correct / total
-    return avg_val_loss, accuracy
+    #accuracy = correct / total
+
+    accuracy = sum(accuracy_list)/len(accuracy_list)
+
+    precision = precision_score(all_labels, all_predictions, average='weighted', zero_division=1)
+    recall = recall_score(all_labels, all_predictions, average='weighted', zero_division=1)
+    f1 = f1_score(all_labels, all_predictions, average='weighted', zero_division=1)
+
+    return avg_val_loss, accuracy, precision, recall, f1
+"""
+#print("previous_accuracy:", val_loss)
+#print("alternate_accuracy:", alternate_accuracy)
+return avg_val_loss, alternate_accuracy
+"""
 
 def train(model, train_loader, val_loader, epochs, criterion, optimizer, writer, grad_clip=1.0, patience=20):
     """
@@ -189,7 +212,7 @@ def train(model, train_loader, val_loader, epochs, criterion, optimizer, writer,
             running_loss += loss.item()
 
         avg_train_loss = running_loss / len(train_loader)
-        avg_val_loss, _ = evaluate(model, val_loader, criterion)
+        avg_val_loss, _,_,_,_ = evaluate(model, val_loader, criterion)
 
         writer.add_scalars('Loss', {'train': avg_train_loss, 'validation': avg_val_loss}, epoch)
 
@@ -336,20 +359,38 @@ def find_best_classification_nn(train_loader, val_loader, test_loader, epochs, w
 
         training_duration = train(model, train_loader, val_loader, epochs, criterion, optimizer, writer)
 
-        _, train_acc = evaluate(model, train_loader, criterion)
-        _, val_acc = evaluate(model, val_loader, criterion)
-        _, test_acc = evaluate(model, test_loader, criterion)
+        train_loss, train_acc, train_precision, train_recall,  train_f1 = evaluate(model, train_loader, criterion)
+        val_loss, val_acc, val_precision, val_recall, val_f1 = evaluate(model, val_loader, criterion)
+        test_loss, test_acc, test_precision, test_recall, test_f1 = evaluate(model, test_loader, criterion)
 
         metrics = {
-            'Accuracy': {
-                'train': train_acc,
-                'validation': val_acc,
-                'test': test_acc
+            'Train': {
+                'accuracy': train_acc,
+                'precision': train_precision,
+                'recall': train_recall,
+                'f1': train_f1,
+                'loss': train_loss
             },
-            'training_duration': training_duration
+            'Validation': {
+                'accuracy': val_acc,
+                'precision': val_precision,
+                'recall': val_recall,
+                'f1': val_f1,
+                'loss': val_loss
+            },
+            'Test': {
+                'accuracy': test_acc,
+                'precision': test_precision,
+                'recall': test_recall,
+                'f1': test_f1,
+                'loss': test_loss
+            }
         }
 
         save_model(model, config, metrics, f"models/neural_network_classification/{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}")
+
+        #with open('classification/best_model/hyperparameters.json', 'r') as f:
+
 
         if val_acc > best_accuracy:
             best_accuracy = val_acc
@@ -361,7 +402,7 @@ def find_best_classification_nn(train_loader, val_loader, test_loader, epochs, w
     return best_model, best_metrics, best_config
 
 if __name__ == "__main__":
-    data = pd.read_csv('AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv')
+    data = pd.read_csv('AirbnbData/Processed_Data/clean_tabular_data.csv')
     unique_bedrooms = sorted(data['bedrooms'].unique())
     bedroom_mapping = {bedroom: idx for idx, bedroom in enumerate(unique_bedrooms)}
 
