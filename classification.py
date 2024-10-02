@@ -51,6 +51,10 @@ class AirbnbLogisticRegression:
         x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
         x_train, x_valid, y_train, y_valid = train_test_split(x_train, y_train, test_size=0.5, random_state=42)
 
+        print(f'x_train shape: {x_train.shape}, y_train shape: {y_train.shape}')
+        print(f'x_valid shape: {x_valid.shape}, y_valid shape: {y_valid.shape}')
+        print(f'x_test shape: {x_test.shape}, y_test shape: {y_test.shape}')
+
         self.train_split = {
             'xtrain': x_train,
             'xtest': x_test,
@@ -95,10 +99,6 @@ class AirbnbLogisticRegression:
         self.train_split["xtrain"] = scaler.fit_transform(self.train_split['xtrain'])
         self.train_split["xtest"] = scaler.transform(self.train_split['xtest'])
         self.train_split['xvalid'] = scaler.transform(self.train_split['xvalid'])
-
-        #self.X_train = scaler.fit_transform(self.train_split['xtrain'])
-        #self.X_test = scaler.transform(self.train_split['xtest'])
-        #self.X_valid = scaler.transform(self.train_split['xvalid'])
 
     def plot_predictions(self, model, xtest, ytest, title):
 
@@ -207,8 +207,8 @@ class AirbnbLogisticRegression:
 
         train_accuracy = accuracy_score(ytrain, ypred_train)
         train_precision = precision_score(ytrain, ypred_train, average='macro')
-        train_recall = recall_score(ytest, ypred_train, average='macro')
-        train_f1 = f1_score(ytest, ypred_train, average='macro')
+        train_recall = recall_score(ytrain, ypred_train, average='macro')
+        train_f1 = f1_score(ytrain, ypred_train, average='macro')
 
         val_precision = precision_score(yvalid, ypred_valid, average='macro')
         val_recall = recall_score(yvalid, ypred_valid, average='macro')
@@ -509,7 +509,7 @@ class AirbnbLogisticRegression:
                 performance_metrics = json.load(metrics_file)
 
             # Check performance metric
-            validation_accuracy = performance_metrics['validation_accuracy']
+            validation_accuracy = performance_metrics['Validation']['accuracy']
 
             # Check if the current model has a lower RMSE
             if validation_accuracy > best_validation_accuracy:
