@@ -98,11 +98,13 @@ class AirbnbPriceModel(nn.Module):
 
         layers = []
         layers.append(nn.Linear(input_dim, hidden_layer_width))
+        layers.append(nn.BatchNorm1d(hidden_layer_width))
         layers.append(nn.ReLU())
         layers.append(nn.Dropout(dropout_prob))  # Add dropout after activation
 
         for _ in range(depth - 1):
             layers.append(nn.Linear(hidden_layer_width, hidden_layer_width))
+            layers.append(nn.BatchNorm1d(hidden_layer_width))
             layers.append(nn.ReLU())
             layers.append(nn.Dropout(dropout_prob))  # Add dropout after activation
 
@@ -156,7 +158,7 @@ def evaluate(model, dataloader, criterion):
     r2 = r2_score(all_labels, all_outputs)
     return avg_val_loss, rmse, r2
 
-def train(model, train_loader, val_loader, epochs, criterion, optimizer, writer, grad_clip=1.0, patience=20):
+def train(model, train_loader, val_loader, epochs, criterion, optimizer, writer, grad_clip=1.0, patience=10):
 
     """
     Trains the model for a specified number of epochs and logs the training and validation metrics.
@@ -309,10 +311,10 @@ def generate_nn_configs():
     """
 
     depths = [2, 3]  # Fixed at 2 layers for fine-tuning
-    hidden_layer_widths = [256]  # Fixed at 128 units for fine-tuning
+    hidden_layer_widths = [32, 64, 128]  
     learning_rates = [0.003, 0.005, 0.007]  # Different learning rates to try
-    dropout_probs = [0.2]  # Different dropout probabilities to try
-    weight_decays = [0.001]  # Different weight decays to try
+    dropout_probs = [0.2, 0.3, 0.4, 0.5]  # Different dropout probabilities to try
+    weight_decays = [0.001, 0.005, 0.01]  # Different weight decays to try
     optimisers = ['Adam']  # Fixed optimiser for fine-tuning
     
     configs = []
@@ -409,7 +411,7 @@ if __name__ == "__main__":
 
     writer = SummaryWriter()
 
-    best_model, best_metrics, best_config = find_best_nn(train_loader, val_loader, test_loader, epochs=200, writer=writer)
+    best_model, best_metrics, best_config = find_best_nn(train_loader, val_loader, test_loader, epochs=100, writer=writer)
 
     writer.close()
 

@@ -51,10 +51,6 @@ class AirbnbLogisticRegression:
         x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
         x_train, x_valid, y_train, y_valid = train_test_split(x_train, y_train, test_size=0.5, random_state=42)
 
-        print(f'x_train shape: {x_train.shape}, y_train shape: {y_train.shape}')
-        print(f'x_valid shape: {x_valid.shape}, y_valid shape: {y_valid.shape}')
-        print(f'x_test shape: {x_test.shape}, y_test shape: {y_test.shape}')
-
         self.train_split = {
             'xtrain': x_train,
             'xtest': x_test,

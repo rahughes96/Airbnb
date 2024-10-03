@@ -221,6 +221,7 @@ class MGS():
         train_mse = mean_squared_error(ytrain, self.best_model.predict(xtrain))
         valid_mse = mean_squared_error(yvalid, ypred_valid)
 
+        """
         performance_metrics = {
             "train_RMSE": np.sqrt(mean_squared_error(ytrain, self.best_model.predict(xtrain))),
             "test_RMSE": np.sqrt(mean_squared_error(yvalid, ypred_valid)),
@@ -232,6 +233,25 @@ class MGS():
             "test_MSE": valid_mse,
             "validation_MSE": None
         }  
+        """
+
+        performance_metrics = {
+            'Train': {
+                'RMSE': np.sqrt(mean_squared_error(ytrain, self.best_model.predict(xtrain))),
+                'R2': train_r2,
+                'MSE': train_mse
+            },
+            'Test': {
+                'RMSE': np.sqrt(mean_squared_error(yvalid, ypred_valid)),
+                'R2': valid_r2,
+                'MSE': valid_mse
+            },
+            'Validation': {
+                'RMSE': validation_rmse,
+                'R2': None,
+                'MSE': None
+            }
+        }
 
         return self.best_model, self.best_hyperparameters, performance_metrics
 
@@ -442,8 +462,8 @@ class MGS():
                 performance_metrics = json.load(metrics_file)
 
             # Check if the current model has a lower RMSE
-            if performance_metrics["validation_RMSE"] < best_rmse:
-                best_rmse = performance_metrics["validation_RMSE"]
+            if performance_metrics["Validation"]["RMSE"] < best_rmse:
+                best_rmse = performance_metrics["Validation"]["RMSE"]
                 best_model_name = model_name
                 best_model = loaded_model
                 best_hyperparameters = hyperparameters
@@ -460,6 +480,6 @@ if __name__ == "__main__":
     mgs = MGS()
 
     print("Evaluate all models")
-    mgs.evaluate_all_models('AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv', 'Price_Night', plot=True)
+    mgs.evaluate_all_models('AirbnbData/Processed_Data/clean_tabular_data.csv', 'Price_Night', plot=True)
 
     best_model, best_hyperparameters, best_performance_metrics = mgs.find_best_model("models/regression/")
