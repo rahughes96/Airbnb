@@ -17,6 +17,7 @@ if __name__ == "__main__":
     cleaned_airbnb_data.to_csv(clean_data_path)
     
     #Regression
+    
     print("REGRESSION")
     mgs = MGS()
 
@@ -34,6 +35,7 @@ if __name__ == "__main__":
     print("NEURAL NETWORK")
     data = pd.read_csv('AirbnbData/Processed_Data/clean_tabular_data.csv')
     dataset = AirbnbNightlyPriceRegressionDataset(data)
+    dim = dataset.input_dim
     train_size = int(0.7 * len(dataset))
     val_size = int(0.15 * len(dataset))
     test_size = len(dataset) - train_size - val_size
@@ -46,7 +48,7 @@ if __name__ == "__main__":
 
     writer = SummaryWriter()
 
-    best_model, best_metrics, best_config = find_best_nn(train_loader, val_loader, test_loader, epochs=200, writer=writer)
+    best_model, best_metrics, best_config = find_best_nn(dim, train_loader, val_loader, test_loader, epochs=200, writer=writer)
 
     writer.close()
 
@@ -60,12 +62,13 @@ if __name__ == "__main__":
     bedroom_mapping = {bedroom: idx for idx, bedroom in enumerate(unique_bedrooms)}
 
     cleaned_airbnb_data['bedrooms_mapped'] = cleaned_airbnb_data['bedrooms'].map(bedroom_mapping)
-    dataset = AirbnbNightlyPriceClassificationDataset(cleaned_airbnb_data)
-    train_size = int(0.7 * len(dataset))
-    val_size = int(0.15 * len(dataset))
-    test_size = len(dataset) - train_size - val_size
+    class_dataset = AirbnbNightlyPriceClassificationDataset(cleaned_airbnb_data)
+    dim = class_dataset.input_dim
+    train_size = int(0.7 * len(class_dataset))
+    val_size = int(0.15 * len(class_dataset))
+    test_size = len(class_dataset) - train_size - val_size
 
-    train_dataset, val_dataset, test_dataset = random_split(dataset, [train_size, val_size, test_size])
+    train_dataset, val_dataset, test_dataset = random_split(class_dataset, [train_size, val_size, test_size])
 
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
@@ -73,7 +76,7 @@ if __name__ == "__main__":
 
     writer = SummaryWriter()
 
-    best_model, best_metrics, best_config = find_best_classification_nn(train_loader, val_loader, test_loader, epochs=200, writer=writer)
+    best_model, best_metrics, best_config = find_best_classification_nn(dim, train_loader, val_loader, test_loader, epochs=200, writer=writer)
 
     writer.close()
 

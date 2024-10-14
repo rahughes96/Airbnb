@@ -149,6 +149,6 @@ if __name__ == "__main__":
     print("Cleaning...")
     Airbnb_data = Airbnb_data[Airbnb_data['guests']!= 'Somerford Keynes England United Kingdom']
     cleaned_airbnb_data = clean_tabular_data(Airbnb_data)
-    cleaned_airbnb_data.to_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Processed_Data/clean_tabular_data/clean_tabular_data.csv')
+    cleaned_airbnb_data.to_csv('/Users/ryanhughes/Desktop/Aicore/Airbnb/Airbnb/AirbnbData/Processed_Data/clean_tabular_data.csv')
 
     print("done")

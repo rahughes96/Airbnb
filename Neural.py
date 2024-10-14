@@ -42,6 +42,7 @@ class AirbnbNightlyPriceRegressionDataset(Dataset):
         self.dataframe = dataframe
         self.features = dataframe.select_dtypes([float, int]).drop(["Unnamed: 0", "bedrooms"], axis=1).drop(label, axis=1)
         self.labels = dataframe[label]
+        self.input_dim = len(self.features.columns)
         
 
         # Normalize the features
@@ -336,7 +337,7 @@ def generate_nn_configs():
     return configs[:16]  
 
 
-def find_best_nn(train_loader, val_loader, test_loader, epochs, writer):
+def find_best_nn(input_dim, train_loader, val_loader, test_loader, epochs, writer):
 
     """
     Finds the best neural network configuration by training and evaluating models with different configurations.
@@ -359,7 +360,6 @@ def find_best_nn(train_loader, val_loader, test_loader, epochs, writer):
     configs = generate_nn_configs()
 
     for config in configs:
-        input_dim = len(numerical_features)
         model = AirbnbPriceModel(input_dim, config, dropout_prob=config['dropout_prob'])
         criterion = nn.MSELoss()
         optimizer = getattr(optim, config['optimiser']['name'])(model.parameters(), lr=config['optimiser']['learning_rate'], weight_decay=config['weight_decay'])
@@ -401,6 +401,7 @@ def find_best_nn(train_loader, val_loader, test_loader, epochs, writer):
 if __name__ == "__main__":
     data = pd.read_csv('AirbnbData/Processed_Data/clean_tabular_data.csv')
     dataset = AirbnbNightlyPriceRegressionDataset(data)
+    dim = dataset.input_dim
     train_size = int(0.7 * len(dataset))
     val_size = int(0.15 * len(dataset))
     test_size = len(dataset) - train_size - val_size
@@ -413,7 +414,7 @@ if __name__ == "__main__":
 
     writer = SummaryWriter()
 
-    best_model, best_metrics, best_config = find_best_nn(train_loader, val_loader, test_loader, epochs=100, writer=writer)
+    best_model, best_metrics, best_config = find_best_nn(dim,train_loader, val_loader, test_loader, epochs=100, writer=writer)
 
     writer.close()
 

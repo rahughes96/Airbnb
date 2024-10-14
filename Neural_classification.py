@@ -39,8 +39,9 @@ class AirbnbNightlyPriceClassificationDataset(Dataset):
         """
 
         self.dataframe = dataframe
-        self.features = dataframe.select_dtypes([float, int]).drop(["Unnamed: 0", "bedrooms"], axis=1).drop(label, axis=1)
+        self.features = dataframe.select_dtypes([float, int]).drop(label, axis=1)
         self.labels = dataframe[label].values.astype(int)
+        self.input_dim = len(self.features.columns)
 
         # Normalize the features
         if scaler is None:
@@ -334,7 +335,7 @@ def generate_nn_configs():
     return configs[:16]  # Select the first 16 configurations
 
 
-def find_best_classification_nn(train_loader, val_loader, test_loader, epochs, writer):
+def find_best_classification_nn(input_dim, train_loader, val_loader, test_loader, epochs, writer):
     """
     Finds the best neural network model configuration by training on the dataset.
     
@@ -355,7 +356,6 @@ def find_best_classification_nn(train_loader, val_loader, test_loader, epochs, w
     configs = generate_nn_configs()
 
     for config in configs:
-        input_dim = len(numerical_features)
         model = AirbnbPriceClassificationModel(input_dim, config, dropout_prob=config['dropout_prob'], num_classes=9)
         criterion = nn.CrossEntropyLoss()
         optimizer = getattr(optim, config['optimiser']['name'])(model.parameters(), lr=config['optimiser']['learning_rate'], weight_decay=config['weight_decay'])
@@ -412,6 +412,7 @@ if __name__ == "__main__":
     # Apply the mapping
     data['bedrooms_mapped'] = data['bedrooms'].map(bedroom_mapping)
     dataset = AirbnbNightlyPriceClassificationDataset(data)
+    dim = dataset.input_dim
     train_size = int(0.7 * len(dataset))
     val_size = int(0.15 * len(dataset))
     test_size = len(dataset) - train_size - val_size
@@ -424,7 +425,7 @@ if __name__ == "__main__":
 
     writer = SummaryWriter()
 
-    best_model, best_metrics, best_config = find_best_classification_nn(train_loader, val_loader, test_loader, epochs=200, writer=writer)
+    best_model, best_metrics, best_config = find_best_classification_nn(dim, train_loader, val_loader, test_loader, epochs=200, writer=writer)
 
     writer.close()
 
