@@ -221,19 +221,6 @@ class MGS():
         train_mse = mean_squared_error(ytrain, self.best_model.predict(xtrain))
         valid_mse = mean_squared_error(yvalid, ypred_valid)
 
-        """
-        performance_metrics = {
-            "train_RMSE": np.sqrt(mean_squared_error(ytrain, self.best_model.predict(xtrain))),
-            "test_RMSE": np.sqrt(mean_squared_error(yvalid, ypred_valid)),
-            "validation_RMSE": validation_rmse,
-            "train_R2": train_r2,
-            "test_R2": valid_r2,
-            "validation_R2": None,
-            "train_MSE": train_mse,
-            "test_MSE": valid_mse,
-            "validation_MSE": None
-        }  
-        """
 
         performance_metrics = {
             'Train': {

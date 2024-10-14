@@ -15,9 +15,6 @@ import os
 import datetime
 import time
 
-# Define numerical features and label
-numerical_features = ['guests', 'beds', 'bathrooms', 'Cleanliness_rating', 'Accuracy_rating',
-                      'Communication_rating', 'Location_rating', 'Check-in_rating', 'Value_rating', 'amenities_count']
 label = 'Price_Night'
 
 class AirbnbNightlyPriceRegressionDataset(Dataset):
@@ -35,9 +32,17 @@ class AirbnbNightlyPriceRegressionDataset(Dataset):
             None
         """
 
+        """
         self.dataframe = dataframe
         self.features = dataframe[numerical_features].astype(float).values
         self.labels = dataframe[label].values.astype(float)
+
+        #print(self.features)
+        """
+        self.dataframe = dataframe
+        self.features = dataframe.select_dtypes([float, int]).drop(["Unnamed: 0", "bedrooms"], axis=1).drop(label, axis=1)
+        self.labels = dataframe[label]
+        
 
         # Normalize the features
         if scaler is None:
@@ -94,19 +99,19 @@ class AirbnbPriceModel(nn.Module):
         super(AirbnbPriceModel, self).__init__()
         hidden_layer_width = config['hidden_layer_width']
         depth = config['depth']
-        dropout_prob = config.get('dropout_prob', 0.0)  # Default to 0.0 if not provided
+        dropout_prob = config.get('dropout_prob', 0.0)  
 
         layers = []
         layers.append(nn.Linear(input_dim, hidden_layer_width))
         layers.append(nn.BatchNorm1d(hidden_layer_width))
         layers.append(nn.ReLU())
-        layers.append(nn.Dropout(dropout_prob))  # Add dropout after activation
+        layers.append(nn.Dropout(dropout_prob))  
 
         for _ in range(depth - 1):
             layers.append(nn.Linear(hidden_layer_width, hidden_layer_width))
             layers.append(nn.BatchNorm1d(hidden_layer_width))
             layers.append(nn.ReLU())
-            layers.append(nn.Dropout(dropout_prob))  # Add dropout after activation
+            layers.append(nn.Dropout(dropout_prob))  
 
         layers.append(nn.Linear(hidden_layer_width, 1))
         self.model = nn.Sequential(*layers)
@@ -140,7 +145,7 @@ def evaluate(model, dataloader, criterion):
         tuple: A tuple containing the average validation loss, root mean squared error, and R-squared score.
     """
 
-    model.eval()  # Set the model to evaluation mode
+    model.eval()  
     val_loss = 0.0
     all_labels = []
     all_outputs = []
@@ -183,18 +188,18 @@ def train(model, train_loader, val_loader, epochs, criterion, optimizer, writer,
     best_epoch = 0
     
     for epoch in range(epochs):
-        model.train()  # Set the model to training mode
+        model.train()  
         running_loss = 0.0
         for batch_idx, (features, labels) in enumerate(train_loader):
-            optimizer.zero_grad()  # Clear gradients
-            outputs = model(features)  # Forward pass
-            loss = criterion(outputs, labels.unsqueeze(1))  # Compute loss
-            loss.backward()  # Backward pass
+            optimizer.zero_grad()  
+            outputs = model(features)  
+            loss = criterion(outputs, labels.unsqueeze(1))  
+            loss.backward()  
             
             # Apply gradient clipping
             torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
             
-            optimizer.step()  # Update weights
+            optimizer.step()  
 
             running_loss += loss.item()
 
@@ -216,8 +221,6 @@ def train(model, train_loader, val_loader, epochs, criterion, optimizer, writer,
 
         writer.add_scalar('Loss/Train', avg_train_loss, epoch)
         writer.add_scalar('Loss/Validation', val_loss, epoch)
-
-        #print(f"Epoch [{epoch+1}/{epochs}], Training Loss: {avg_train_loss:.4f}, Validation Loss: {val_loss:.4f}")
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
@@ -256,7 +259,6 @@ def save_model(model, config, metrics, model_path, best_model=False):
     with open(os.path.join(model_path, 'hyperparameters.json'), 'w') as f:
         json.dump(config, f, indent=4)
     
-    # Convert numpy float32 to standard float before saving to JSON
     def convert_metrics(metrics):
         if isinstance(metrics, dict):
             return {k: convert_metrics(v) for k, v in metrics.items()}
@@ -310,12 +312,12 @@ def generate_nn_configs():
         list: A list of dictionaries, each containing a unique set of hyperparameters for the model.
     """
 
-    depths = [2, 3]  # Fixed at 2 layers for fine-tuning
+    depths = [2, 3]  
     hidden_layer_widths = [32, 64, 128]  
-    learning_rates = [0.003, 0.005, 0.007]  # Different learning rates to try
-    dropout_probs = [0.2, 0.3, 0.4, 0.5]  # Different dropout probabilities to try
-    weight_decays = [0.001, 0.005, 0.01]  # Different weight decays to try
-    optimisers = ['Adam']  # Fixed optimiser for fine-tuning
+    learning_rates = [0.003, 0.005, 0.007]  
+    dropout_probs = [0.2, 0.3, 0.4, 0.5]  
+    weight_decays = [0.001, 0.005, 0.01]  
+    optimisers = ['Adam']  
     
     configs = []
     for depth, width, lr, dropout_prob, weight_decay, opt in itertools.product(depths, hidden_layer_widths, learning_rates, dropout_probs, weight_decays, optimisers):
@@ -331,7 +333,7 @@ def generate_nn_configs():
         }
         configs.append(config)
         
-    return configs[:16]  # Select the first 16 configurations
+    return configs[:16]  
 
 
 def find_best_nn(train_loader, val_loader, test_loader, epochs, writer):

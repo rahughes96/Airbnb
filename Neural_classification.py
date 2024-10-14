@@ -16,10 +16,7 @@ import os
 import datetime
 import time
 
-numerical_features = ['guests', 'beds', 'bathrooms', 'Cleanliness_rating', 'Accuracy_rating',
-                      'Communication_rating', 'Location_rating', 'Check-in_rating', 'Value_rating',
-                      'amenities_count', 'Price_Night']  # Include Price_Night as a feature
-label = 'bedrooms_mapped'  # New label is the number of bedrooms
+label = 'bedrooms_mapped'  
 
 class AirbnbNightlyPriceClassificationDataset(Dataset):
     """
@@ -35,9 +32,15 @@ class AirbnbNightlyPriceClassificationDataset(Dataset):
         scaler (StandardScaler): Scaler used to normalize the feature set.
     """
     def __init__(self, dataframe, scaler=None):
+        """
         self.dataframe = dataframe
         self.features = dataframe[numerical_features].astype(float).values
-        self.labels = dataframe[label].values.astype(int)  # Ensure the label is an integer
+        self.labels = dataframe[label].values.astype(int)  
+        """
+
+        self.dataframe = dataframe
+        self.features = dataframe.select_dtypes([float, int]).drop(["Unnamed: 0", "bedrooms"], axis=1).drop(label, axis=1)
+        self.labels = dataframe[label].values.astype(int)
 
         # Normalize the features
         if scaler is None:
